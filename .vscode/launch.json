@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Ren'Py: Rodar jogo",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "& 'D:\\Program Files\\renpy-8.5.2-sdk\\renpy.exe' '${workspaceFolder}' run",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

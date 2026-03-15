@@ -3,6 +3,11 @@ define julia = Character("Julia", color="#C161D4")
 init -2 python:
     from constants import GameConstants
 
+transform zoom_4:
+    zoom 4
+    nearest True
+
+
 screen ball_minigame(controller):
     modal True
 
@@ -10,10 +15,10 @@ screen ball_minigame(controller):
         background Solid("#000")
         xalign 0.5
         yalign 0.5
-        xsize GameConstants.WIDTH.value
-        ysize GameConstants.HEIGHT.value
+        xsize GameConstants.WIDTH.value * 4
+        ysize GameConstants.HEIGHT.value * 4
 
-        add controller xsize GameConstants.WIDTH.value ysize GameConstants.HEIGHT.value
+        add controller xsize GameConstants.WIDTH.value ysize GameConstants.HEIGHT.value at zoom_4, truecenter
 
 label start:
     scene bg room

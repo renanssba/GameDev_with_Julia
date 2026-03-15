@@ -59,9 +59,13 @@ init -1 python:
             # update all game objects
             self.update()
 
-            # render all game objects
+            # cria main_render que conterá o jogo inteiro
+            self.game.main_render = renpy.Render(self.game.w, self.game.h)
+
+            # cada GameObject faz blit de si no main_render.
             self.render_everything()
 
+            # retorna o main_render para o Ren'Py renderizar
             return self.game.main_render
 
         def visit(self):
@@ -93,7 +97,7 @@ init -1 python:
                 random_ball = random.choice(all_balls)
                 random_ball.be_launched()
                 random_ball.multiply_ball()
-                
+
 
         ### TIMED EFFECTS ###
         def apply_effect(self, effect_type):
@@ -140,16 +144,9 @@ init -1 python:
                 obj.process_inputs()
 
         def render_everything(self):
-            print("context frame: ", self.game.current_frame)
-
-            # create main renpy Render
-            self.game.main_render = renpy.Render(self.game.w, self.game.h)
-
             # renderizar objects
             for obj in self.game.game_objects:
                 obj.execute_render()
-
-            return self.game.main_render
 
 
         def tick_frame(self, w, h, st, at):
@@ -159,7 +156,7 @@ init -1 python:
             self.game.st = st
             self.game.at = at
             self.game.delta_time = float(st) - float(self.last_st)
-            print("st: ", st, " last_st: ", self.last_st, " delta_time: ", self.game.delta_time)
+            # print("st: ", st, " last_st: ", self.last_st, " delta_time: ", self.game.delta_time)
             self.last_st = st
 
             self.game._unscaled_frame += 1

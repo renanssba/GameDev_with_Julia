@@ -1,6 +1,3 @@
-import renpy
-import renpy.display.im as im
-from renpy.display.render import Render
 from enum import Enum
 from constants import GameConstants
 from game_object import GameObject

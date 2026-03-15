@@ -1,9 +1,10 @@
 import os
 import renpy
 import renpy.display.im as im
+from renpy.display.render import Render
 from renpy.display.render import render as renpy_render
 from renpy.display.layout import Transform
-from renpy.display.render import Render
+from renpy.display.imagelike import Frame
 from renpy.display.displayable import Displayable
 import pygame
 import re
@@ -21,8 +22,8 @@ class GameObject(Displayable):
         Displayable.__init__(self)
         self.context = context
 
-        print("--------------------------------")
-        print(f"GameObject init: {img_name}")
+        # print("--------------------------------")
+        # print(f"GameObject init: {img_name}")
 
         # Timed effects like VFX and gameplay status effects
         self.effect_controller = EffectController(self)
@@ -43,24 +44,7 @@ class GameObject(Displayable):
             self.spritesheet_width, self.spritesheet_height = self.get_sprite_size(self.img_path(img_name, ""))
 
             if self.img is not None:
-                print(">> GAME_OBJECT INIT: IMG loaded is OK!")
                 self.frame_width = self.spritesheet_width / self.num_frames
-            else:
-                print(">> GAME_OBJECT INIT: IMG loaded is None!")
-        else:
-            print(">> It has no IMG!")
-        print("")
-
-        # document_all_methods(renpy, "renpy_doc_python.txt")
-
-        if not renpy.loader.loadable("stages/stage1.txt"):
-            print("ERROR: Stage 1 file not found!")
-            return
-        else:
-            print("Stage 1 file found!")
-            with renpy.exports.open_file("stages/stage1.txt", encoding="utf-8") as stage_file:
-                for line in stage_file:
-                    print("line: ", line)
 
         self.scale = Vector2(1, 1)
 
@@ -76,15 +60,15 @@ class GameObject(Displayable):
         if img_name.endswith('_'):
             sprite_path = self.img_path(img_name, num_frames)
             if self.sprite_exists(sprite_path):
-                print(f"Sprite found multiple frames ({num_frames}): {sprite_path}")
+                # print(f"Sprite found multiple frames ({num_frames}): {sprite_path}")
                 return im.Image(sprite_path)
         
         sprite_path = self.img_path(img_name, "")
         if self.sprite_exists(sprite_path):
-            print(f"Sprite found (1 single frame): {sprite_path}")
+            # print(f"Sprite found (1 single frame): {sprite_path}")
             return im.Image(sprite_path)
 
-        print(f"ERROR: Sprite not found: {sprite_path}")
+        # print(f"ERROR: Sprite not found: {sprite_path}")
         return None
     
 
@@ -134,11 +118,19 @@ class GameObject(Displayable):
         frame = self.current_frame()
         if frame is None:
             return Render(0, 0)
+        else:
+            if self.body.width != self.frame_width:
+                my_render = self.framed_render(frame)
+            else:
+                my_render = self.simple_render(frame)
 
-        obj_render = renpy_render(frame, width, height, st, at)
-        r = Render(obj_render.width, obj_render.height)
-        r.blit(obj_render, (0, 0))
-        return r
+
+        if self.context.debug:
+            blit_rect.width = self.body.width
+            pygame.draw.rect(self.context.get_layer(self.layer_name), (255, 0, 0), blit_rect, 1)
+
+        
+        return my_render
 
     def visit(self):
         if self.img is not None and callable(getattr(self.img, "render", None)):
@@ -153,9 +145,12 @@ class GameObject(Displayable):
     def get_frame(self, frame_number):
         if not hasattr(self, 'img') or self.img is None:
             return None
-        return self.img
-        # TODO: reimplement the subsurface logic
-        return self.img.subsurface(frame_number * self.frame_width, 0, self.frame_width, self.spritesheet_height)
+        if self.num_frames <= 1:
+            return self.img
+        x = int(frame_number * self.frame_width)
+        w = int(self.frame_width)
+        h = int(self.spritesheet_height)
+        return im.Crop(self.img, (x, 0, w, h))
 
     def current_frame_number(self):
         # The object's current frame number based on the game current frame and the object's framerate
@@ -183,32 +178,23 @@ class GameObject(Displayable):
             blit_rect.width = self.body.width
             pygame.draw.rect(self.context.get_layer(self.layer_name), (255, 0, 0), blit_rect, 1)
 
-    def blit_to_layer(self, frame, blit_rect):
-        self.context.get_layer(self.layer_name).blit(frame, blit_rect)
+    def simple_render(self, frame):
+        obj_render = renpy_render(frame, self.context.w, self.context.h, self.context.st, self.context.at)
+        my_render =  Render(obj_render.width, obj_render.height)
+        my_render.blit(obj_render, (0, 0))
+        return my_render
 
-    def blit_3_slice(self, frame, blit_rect):
-        frame_w = frame.get_width()
-        frame_h = frame.get_height()
-        slice_size = int(frame_w / 2 - 1)
-        layer = self.context.get_layer(self.layer_name)
+    def framed_render(self, frame):
+        # Cria Render do tamanho do body. Frame(0,0,0,0) escala a imagem para preencher a área.
+        border_w = self.frame_width/2-1
+        border_h = self.spritesheet_height/2-1
 
-        # Left piece
-        left_src = pygame.Rect(0, 0, slice_size, frame_h)
-        left_dest = FRect(blit_rect.x, blit_rect.y, slice_size, blit_rect.height)
-        layer.blit(frame, left_dest, area=left_src)
-
-        # Right piece
-        right_src = pygame.Rect(frame_w - slice_size, 0, slice_size, frame_h)
-        right_dest = FRect(blit_rect.x + blit_rect.width - slice_size, blit_rect.y, slice_size, blit_rect.height)
-        layer.blit(frame, right_dest, area=right_src)
-
-        # Center piece (stretched to fill)
-        center_src_w = frame_w - 2 * slice_size
-        center_dest_w = blit_rect.width - 2 * slice_size
-        if center_src_w > 0 and center_dest_w > 0:
-            center_src = frame.subsurface(pygame.Rect(slice_size, 0, center_src_w, frame_h))
-            center_scaled = pygame.transform.scale(center_src, (int(center_dest_w), int(blit_rect.height)))
-            layer.blit(center_scaled, (blit_rect.x + slice_size, blit_rect.y))
+        w = int(self.body.width)
+        h = int(self.body.height)
+        framed = Frame(frame, border_w, border_h, border_w, border_h)
+        my_render = Render(w, h)
+        my_render.place(framed, 0, 0, w, h, st=self.context.st, at=self.context.at)
+        return my_render
 
     def spawn_text_particle(self, text):
         from particle import TextParticle

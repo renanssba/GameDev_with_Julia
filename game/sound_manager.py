@@ -1,5 +1,5 @@
 import pygame
-import os
+import renpy
 from enum import Enum
 
 
@@ -31,7 +31,7 @@ class SfxType(Enum):
     POWERUP_GET = "powerup_got"
     MALUS_GET = "malus_got"
 
-    GAMEPLAY_MUSIC = "song1"
+    GAMEPLAY_MUSIC = "gameplay"
     MENU_MUSIC = "menu"
     VICTORY_MUSIC = "victory"
     DEFEAT_MUSIC = "defeat"
@@ -53,23 +53,27 @@ class SoundManager:
         # pygame.mixer.music.set_volume(self.master_volume * self.music_volume)
 
     def play_sfx(self, sfx_type: SfxType):
-        return # TODO: Use Ren'Py sound
         """Plays an SFX by enum value, scaled by effective sfx volume."""
         name = sfx_type.value
-        if name not in self._sfx_cache:
-            loaded_sfx = self.load_sfx(name)
-            if loaded_sfx is not None:
-                self._sfx_cache[name] = loaded_sfx
-            else:
-                return
-        snd = self._sfx_cache[name]
-        snd.set_volume(self.effective_sfx_volume())
-        snd.play()
+        sfx_path = "sfx/"+name+".ogg"
+        if renpy.loader.loadable(sfx_path):
+            return renpy.audio.sound.play(sfx_path, channel="audio")
+
+
+        # if name not in self._sfx_cache:
+        #     loaded_sfx = self.load_sfx(name)
+        #     if loaded_sfx is not None:
+        #         self._sfx_cache[name] = loaded_sfx
+        #     else:
+        #         return
+        # snd = self._sfx_cache[name]
+        # snd.set_volume(self.effective_sfx_volume())
+        # snd.play()
 
     def load_sfx(self, name: str):
-        sfx_path = "sfx/"+name+".wav"
-        if os.path.isfile(sfx_path):
-            return pygame.mixer.Sound(sfx_path)
+        sfx_path = "sfx/"+name+".ogg"
+        if renpy.loader.loadable(sfx_path):
+            return renpy.audio.sound.play(sfx_path)
         else:
             return None
 
@@ -83,57 +87,59 @@ class SoundManager:
         return base
 
     def play_music(self, sfx_type: SfxType):
-        return # TODO: Use Ren'Py music
+        # return # TODO: Use Ren'Py music
         """
         Plays music in two parts: intro (1x) + loop (∞).
         If the intro file does not exist, only the loop is played in loop infinity.
         """
         base = self._get_music_base(sfx_type)
+        print("SOUND MANAGER playing music: ", base)
 
         # already playing this music
         if self.current_music == base and self._music_state in ("intro", "loop"):
             return
 
-        intro_path = f"songs/{base}_intro.wav"
-        loop_path = f"songs/{base}_loop.wav"
+        intro_path = f"songs/{base}_intro.mp3"
+        loop_path = f"songs/{base}_loop.mp3"
 
-        if os.path.isfile(intro_path):
-            pygame.mixer.music.stop()
-            pygame.mixer.music.load(intro_path)
-            pygame.mixer.music.play()
+        print("intro_path: ", intro_path, "loop_path: ", loop_path)
+
+        if renpy.loader.loadable(intro_path):
+            print("playing intro")
+            renpy.audio.music.play(intro_path, loop=False)
             self.current_music = base
             self._music_state = "intro"
-        elif os.path.isfile(loop_path):
-            pygame.mixer.music.stop()
-            pygame.mixer.music.load(loop_path)
-            pygame.mixer.music.play(loops=-1)
+            print("music is looping: ", renpy.audio.music.get_loop())
+        elif renpy.loader.loadable(loop_path):
+            print("playing loop")
+            renpy.audio.music.play(loop_path, loop=True)
             self.current_music = base
             self._music_state = "loop"
         else:
             # no file found
             self.current_music = None
             self._music_state = None
+        
+        print("SOUND MANAGER music state: ", self._music_state)
 
     def update(self):
         """Updates the music state: when the intro ends, starts the loop infinitely."""
         if self._music_state != "intro":
             return
-        if not pygame.mixer.music.get_busy():
+        if renpy.audio.music.get_playing(channel="music") is None:
             base = self.current_music
             if base is None:
                 self._music_state = None
                 return
-            loop_path = f"songs/{base}_loop.wav"
-            if os.path.isfile(loop_path):
-                pygame.mixer.music.load(loop_path)
-                pygame.mixer.music.play(loops=-1)
+            loop_path = f"songs/{base}_loop.mp3"
+            if renpy.loader.loadable(loop_path):
+                renpy.audio.music.play(loop_path, channel="music", loop=True)
                 self._music_state = "loop"
             else:
                 self._music_state = None
 
     def stop_music(self):
-        return # TODO: Use Ren'Py music
-        pygame.mixer.music.stop()
+        renpy.audio.music.stop(channel="music")
         self.current_music = None
         self._music_state = None
 
@@ -158,7 +164,7 @@ class SoundManager:
             snd.set_volume(self.effective_sfx_volume())
 
         # Apply to current music (if any)
-        pygame.mixer.music.set_volume(self.effective_music_volume())
+        renpy.audio.music.set_volume(self.effective_music_volume(), channel="music")
 
     def effective_sfx_volume(self):
         return self.master_volume * self.sfx_volume

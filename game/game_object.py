@@ -1,3 +1,4 @@
+import os
 import renpy
 import renpy.display.im as im
 from renpy.display.render import render as renpy_render
@@ -13,13 +14,14 @@ from frect import FRect
 from effects import EffectType
 from effect_controller import EffectController
 
+
 class GameObject(Displayable):
-# class GameObject():
     """Base class for objects that have an image and position on the screen."""
     def __init__(self, x, y, img_name, context):
         Displayable.__init__(self)
         self.context = context
 
+        print("--------------------------------")
         print(f"GameObject init: {img_name}")
 
         # Timed effects like VFX and gameplay status effects
@@ -41,11 +43,24 @@ class GameObject(Displayable):
             self.spritesheet_width, self.spritesheet_height = self.get_sprite_size(self.img_path(img_name, ""))
 
             if self.img is not None:
-                print(">> GAME_OBJECT INIT: IMG loaded is NOT None!")
+                print(">> GAME_OBJECT INIT: IMG loaded is OK!")
                 self.frame_width = self.spritesheet_width / self.num_frames
             else:
                 print(">> GAME_OBJECT INIT: IMG loaded is None!")
-            print("")
+        else:
+            print(">> It has no IMG!")
+        print("")
+
+        # document_all_methods(renpy, "renpy_doc_python.txt")
+
+        if not renpy.loader.loadable("stages/stage1.txt"):
+            print("ERROR: Stage 1 file not found!")
+            return
+        else:
+            print("Stage 1 file found!")
+            with renpy.exports.open_file("stages/stage1.txt", encoding="utf-8") as stage_file:
+                for line in stage_file:
+                    print("line: ", line)
 
         self.scale = Vector2(1, 1)
 
@@ -56,18 +71,17 @@ class GameObject(Displayable):
 
     ### SETUP AND INITIALIZATION ###
     def load_spritesheet(self, img_name):
-        print("")
-        print(f"Loading spritesheet: {img_name}")
-
         num_frames = self.get_number_of_frames(img_name)
 
         if img_name.endswith('_'):
             sprite_path = self.img_path(img_name, num_frames)
             if self.sprite_exists(sprite_path):
+                print(f"Sprite found multiple frames ({num_frames}): {sprite_path}")
                 return im.Image(sprite_path)
         
         sprite_path = self.img_path(img_name, "")
         if self.sprite_exists(sprite_path):
+            print(f"Sprite found (1 single frame): {sprite_path}")
             return im.Image(sprite_path)
 
         print(f"ERROR: Sprite not found: {sprite_path}")
@@ -88,15 +102,13 @@ class GameObject(Displayable):
 
     def sprite_exists(self, sprite_path):
         if renpy.loader.loadable(sprite_path):
-            print(f"sprite {sprite_path} exists!")
             return True
         else:
-            print(f"sprite {sprite_path} does not exist!")
             return False
 
     def get_sprite_size(self, sprite_path):
-        if self.sprite_exists(sprite_path):
-            return im.Image(sprite_path).get_size()
+        if self.img is not None:
+            return renpy.exports.image_size(self.img)
         else:
             return (0, 0)
 
@@ -210,9 +222,9 @@ class GameObject(Displayable):
 
 
     ### PHYSICS AND BODY ###
-    def apply_physics(self, delta_time = 1.0):
-        self.body.x += self.velocity.x * float(delta_time) * 60.0
-        self.body.y += self.velocity.y * float(delta_time) * 60.0
+    def apply_physics(self):
+        self.body.x += self.velocity.x
+        self.body.y += self.velocity.y
 
         self.effect_controller.update()
 
@@ -221,7 +233,7 @@ class GameObject(Displayable):
             vel_length = self.velocity.length()
             desired_length = self.desired_vel_lgth
             if self.linear_drag != 0 and vel_length > desired_length:
-                dragged_speed = max(desired_length, vel_length - self.linear_drag * delta_time)
+                dragged_speed = max(desired_length, vel_length - self.linear_drag)
                 self.velocity.scale_to_length(dragged_speed)
 
     def collide_with(self, other):

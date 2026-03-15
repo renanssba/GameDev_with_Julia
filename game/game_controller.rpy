@@ -1,12 +1,19 @@
 init -1 python:
+    import os
+    import random
     import pygame
     from renpy.display.core import IgnoreEvent
     from paddle import Paddle
+    from ball import Ball
+    from brick import Brick
     from game_object import GameObject
     from game_context import GameContext
     from constants import GameConstants
     from sound_manager import SoundManager
     from game_context import GameState
+    from stage_controller import StageController
+    from effects import EffectType
+    from effect_controller import EffectController
     import renpy.display.im as im
 
     class GameController(renpy.Displayable):
@@ -19,45 +26,22 @@ init -1 python:
                 GameConstants.HEIGHT.value,
             )
             self.game.game_controller = self
-
-            # load the paddle image
-            self.paddle_sprite = self.load_sprite("paddle_2")
-            self.placeholder_sprite = self.load_sprite("placeholder")
-
-            self.print_list_files()
-
-            print("")
-            print("")
-            print("MY TESTS HAVE SUCCEEDED!!!")
-            print("")
-            print("")
-
+            
             # Initialize sound
             self.game.sound_manager = SoundManager()
 
+            # DEBUG PRINT ALL FILES
+            # self.print_list_files()
+            
+            # Setup stage (player, sound, level)
+            self.stage_controller = StageController(self.game)
+            self.stage_controller.setup(self.game.stage_id)
+
+            # Initialize game-wide effects
+            self.effect_controller = EffectController(self)
+
             # Initialize last frame time
             self.last_st = 0.0
-
-            player_x = self.game.screen.width / 2
-            player_y = self.game.screen.height - 30
-            # self.paddle = Paddle(player_x, player_y, self.game)
-            self.paddle = GameObject(player_x, player_y, "brickA_", self.game)
-
-        def print_list_files(self):
-            list_of_files = renpy.list_files()
-            for file in list_of_files:
-                print("file: ", file)
-            print("total files: ", len(list_of_files))
-
-        def load_sprite(self, img_name):
-            sprite_path = f"sprites/{img_name}.png"
-            if renpy.loader.loadable(sprite_path):
-                loaded = renpy.load_surface(sprite_path)
-                print(f"{img_name} sprite loaded successfully. size: ", loaded.get_size())
-                return loaded
-            else:
-                print(f"{img_name} is not loadable")
-                return None
 
 
         def is_paused(self):
@@ -69,39 +53,101 @@ init -1 python:
 
         # Game loop (Ren'Py chama render a cada frame)
         def render(self, w, h, st, at):
-
             # tick frame
             self.tick_frame(w, h, st, at)
 
             # update all game objects
-            self.update(self.game.delta_time)
+            self.update()
 
             # render all game objects
-            self.render_everything(w, h)
+            self.render_everything()
 
             return self.game.main_render
 
         def visit(self):
-            return [self.paddle.img]
+            objs = []
+            for obj in self.game.game_objects:
+                objs.extend(obj.visit())
+            return objs
 
 
 
         def is_still_running(self):
             return True
 
-        def update(self, delta_time):
-            self.paddle.process_inputs()
-            self.paddle.apply_physics(delta_time)
+        def multiply_ball(self):
+            free_balls = []
+            all_balls = []
+            for obj in self.game.game_objects:
+                if isinstance(obj, Ball):
+                    all_balls.append(obj)
+                    if not obj.stuck_to_paddle:
+                        free_balls.append(obj)
+            # priorize to multiply free balls
+            if len(free_balls) > 0:
+                random_ball = random.choice(free_balls)
+                random_ball.multiply_ball()
+                return
+            # if no free balls, multiply a random stuck ball
+            if len(all_balls) > 0:
+                random_ball = random.choice(all_balls)
+                random_ball.be_launched()
+                random_ball.multiply_ball()
+                
 
-        def render_everything(self, w, h):
-            print("context frame: ", self.game.current_frame, " paddle frame: ", self.paddle.current_frame_number())
+        ### TIMED EFFECTS ###
+        def apply_effect(self, effect_type):
+            match effect_type:
+                case EffectType.SLOW_BALLS:
+                    self.game.time_scale *= GameConstants.SLOW_FACTOR.value
+                case EffectType.HASTE_BALLS:
+                    self.game.time_scale *= GameConstants.HASTE_FACTOR.value
+
+        def remove_effect(self, effect_type):
+            match effect_type:
+                case EffectType.SLOW_BALLS:
+                    self.game.time_scale /= GameConstants.SLOW_FACTOR.value
+                case EffectType.HASTE_BALLS:
+                    self.game.time_scale /= GameConstants.HASTE_FACTOR.value
+
+
+        def any_of_this_type(self, type):
+            for obj in self.game.game_objects:
+                if isinstance(obj, type):
+                    return True
+            return False
+        
+    
+
+        def gain_score(self, amount, obj):
+            self.game.score += amount
+            # self.gameplay_panel.update_ui()
+            if obj is not None:
+                obj.spawn_text_particle(f"+{amount}")
+            else:
+                self.game.player.spawn_text_particle(f"+{amount}")
+            return
+
+        def update_ui(self):
+            # self.gameplay_panel.update_ui()
+            pass
+        
+
+        ### PHYSICS ###
+        def update(self):
+            for obj in self.game.game_objects:
+                obj.apply_physics()
+                obj.process_inputs()
+
+        def render_everything(self):
+            print("context frame: ", self.game.current_frame)
 
             # create main renpy Render
-            self.game.main_render = renpy.Render(w, h)
+            self.game.main_render = renpy.Render(self.game.w, self.game.h)
 
             # renderizar objects
-            self.paddle.execute_render()
-            # self.game.main_render.blit(paddle_render, (int(self.paddle.body.x), int(self.paddle.body.y)))
+            for obj in self.game.game_objects:
+                obj.execute_render()
 
             return self.game.main_render
 
@@ -113,6 +159,8 @@ init -1 python:
             self.game.st = st
             self.game.at = at
             self.game.delta_time = float(st) - float(self.last_st)
+            print("st: ", st, " last_st: ", self.last_st, " delta_time: ", self.game.delta_time)
+            self.last_st = st
 
             self.game._unscaled_frame += 1
 
@@ -130,8 +178,6 @@ init -1 python:
             if not self.is_running():
                 return
             self.game._current_frame += 1
-
-            self.last_st = st
             renpy.redraw(self, 0)
 
 
@@ -149,13 +195,13 @@ init -1 python:
                     elif getattr(ev, "key", None) == pygame.K_LEFT:
                         self.game.left_pressed = True
                     elif getattr(ev, "key", None) == pygame.K_SPACE:
-                        self.paddle.jump()
+                        self.game.player.action_button_pressed()
                     elif getattr(ev, "key", None) == pygame.K_ESCAPE:
                         renpy.end_interaction("quit_minigame")
             return None
-            # raise IgnoreEvent()
 
 
+        ### DEBUG FUNCTIONS ###
         def debug_event(self, ev):
             # debug: inspeciona o objeto de evento do Ren'Py
             print("=== EVENT DEBUG START ===")
@@ -183,3 +229,15 @@ init -1 python:
                 print("dir(ev) error:", e)
 
             print("=== EVENT DEBUG END ===")
+
+        def print_list_files(self):
+            print("")
+            print("")
+            print("LISTING ALL FILES IN THE GAME FOLDER!!!")
+            print("")
+            print("")
+            list_of_files = renpy.list_files()
+            for file in list_of_files:
+                print("file: ", file)
+            print("total files: ", len(list_of_files))
+

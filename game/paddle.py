@@ -1,10 +1,14 @@
 import renpy
 import renpy.display.im as im
 from renpy.display.render import Render
-from vector2 import Vector2
-from game_object import GameObject
 from enum import Enum
+from constants import GameConstants
+from game_object import GameObject
+from vector2 import Vector2
 from sound_manager import SfxType
+from ball import Ball
+from shot import Shot
+from effects import EffectType
 
 class InputType(Enum):
     MOUSE = "mouse"
@@ -41,22 +45,7 @@ class Paddle(GameObject):
         self.context.game_objects.append(self)
         self.context.player = self
 
-        # self.prepare_ball()
-
-        ## SIMPLE RENDER DEBUG
-        self.image = im.Image("sprites/paddle_2.png")
-        # metade esquerda do paddle: crop=(x, y, largura, altura) em fração 0–1
-        self.image_left_half = renpy.display.motion.Transform(
-            self.image, crop=(0, 0, 0.5, 1.0)
-        )
-        self.img_part = []
-        self.img_paddle_left = renpy.display.motion.Transform(
-            self.image, crop=(0, 0, 0.5, 1.0)
-        )
-        self.img_paddle_right = renpy.display.motion.Transform(
-            self.image, crop=(0.5, 0, 0.5, 1.0)
-        )
-
+        self.prepare_ball()
 
     ### INPUTS ###
     def process_inputs(self):
@@ -85,66 +74,46 @@ class Paddle(GameObject):
     def keyboard_used(self):
         self.input_type = InputType.KEYBOARD
 
-    
 
-
-    def current_frame_number(self):
-        if self.framerate == 0:
-            return 0
-        return int((self.context.current_frame / self.framerate) % self.num_frames)
-
-    def get_frame(self, frame_number):
-        if self.img is None:
-            print("get_frame returning None")
-            return None
-        if frame_number < 0 or frame_number >= self.num_frames:
-            print("get_frame returning None")
-            return None
-        
-        if frame_number < self.num_frames / 2:
-            return self.img_paddle_left
+    ### RENDERING ###
+    def update_sprite(self):
+        if self.effect_controller.has_effect(EffectType.SHOOTING_PADDLE):
+            self.img = self.img_shooter
+        elif self.effect_controller.has_effect(EffectType.STICKY_PADDLE):
+            self.img = self.img_sticky
         else:
-            return self.img_paddle_right
-        # w = 1.0 / self.num_frames
-        # x = frame_number * w
-        # return renpy.display.motion.Transform(self.img, crop=(x, 0, w, 1.0))
+            self.img = self.img_default
 
-    def current_frame(self):
-        return self.image_left_half
-        if not hasattr(self, 'img') or self.img is None:
-            return None
-        print("current frame: ", self.current_frame_number())
-        return self.get_frame(self.current_frame_number())
 
+    def apply_effect(self, effect_type: EffectType):
+        super().apply_effect(effect_type)
+        self.update_sprite()
+
+    def remove_effect(self, effect_type: EffectType):
+        super().remove_effect(effect_type)
+        self.update_sprite()
 
 
 
-    # tentar reimplementar isso aqui
-    def render(self, w, h, st, at):
-        paddle_render = renpy.render(self.image_left_half, w, h, st, at)
-        # paddle_render = renpy.render(self.get_image(st), w, h, st, at)
-        paddle_w, paddle_h = paddle_render.width, paddle_render.height
-        self.context.main_render.blit(paddle_render, (self.body.x, self.body.y))
-
-
-        # frame_disp = self.get_image(st)
-        # if frame_disp is None:
-        #     return Render(0, 0)
-        # return renpy.render(frame_disp, w, h, st, at)
 
     ### PHYSICS ###
-    def apply_physics(self, delta_time):
-        print("paddle velocity: " + str(self.velocity.x) + ", " + str(self.velocity.y) + ", pos: " + str(self.body.x) + ", " + str(self.body.y))
+    def apply_physics(self):
+        # print("applying physics to paddle.velocity: " + str(self.velocity) + ", frame(" + str(self.context.current_frame) + ")")
         if not self.touching_ground():
             gravity_scale = 1.0
             if self.velocity.y < 0:
                 gravity_scale = 1.5
             self.velocity += self.gravity * gravity_scale #* delta_time
-        super().apply_physics(delta_time)
+        super().apply_physics()
         if self.limit_to_screen():
             self.velocity.x = 0
         if self.touching_ground():
             self.velocity.y = 0
+
+        # UPDATE EFFECTS
+        self.effect_controller.update()
+        if self.effect_controller.has_effect_activating(EffectType.SHOOTING_PADDLE):
+            self.spawn_shots()
 
 
     ### CHECKS ###
@@ -154,8 +123,62 @@ class Paddle(GameObject):
     def is_sticky(self):
         return self.effect_controller.has_effect(EffectType.STICKY_PADDLE)
 
-        
+
+    ### BALL MANAGEMENT ###
+    def ball_pos(self):
+        pos_x = self.body_center().x
+        pos_y = self.body_center().y - self.body.height / 2 - GameConstants.BALL_DIAMETER.value / 2
+        return Vector2(pos_x, pos_y)
+
+    def prepare_ball(self):
+        ball = Ball(self.ball_pos().x, self.ball_pos().y, self.context)
+        self.context.game_objects.append(ball)
+
+    def has_ball(self):
+        for obj in self.context.game_objects:
+            if isinstance(obj, Ball):
+                if obj.stuck_to_paddle:
+                    return True
+        return False
+
+
+    
     ### ACTIONS ###
+    def action_button_pressed(self):
+        if not self.context.game_controller.is_running():
+            return
+        
+        if self.has_ball():
+            self.launch_ball()
+        
+        if self.touching_ground():
+            self.jump()
+    
+    def launch_ball(self):
+        if not self.has_ball():
+            return
+
+        self.context.sound_manager.play_sfx(SfxType.BALL_LAUNCH)
+
+        for ball in self.context.game_objects:
+            if isinstance(ball, Ball):
+                if ball.stuck_to_paddle:
+                    ball.be_launched()
+
+
     def jump(self):
-        self.context.sound_manager.play_sfx(SfxType.JUMP.value)
+        self.context.sound_manager.play_sfx(SfxType.JUMP)
         self.velocity += self.jump_force
+    
+
+    def spawn_shots(self):
+        shot_dx = 8
+        new_shot = Shot(self.body.x, self.body.y, self.context)
+        new_shot.align_body_left()
+        new_shot.body.x += shot_dx
+        self.context.game_objects.append(new_shot)
+        
+        new_shot = Shot(self.body.x + self.body.width, self.body.y, self.context)
+        new_shot.align_body_left()
+        new_shot.body.x -= shot_dx
+        self.context.game_objects.append(new_shot)

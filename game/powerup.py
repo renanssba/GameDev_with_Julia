@@ -36,9 +36,8 @@ class Powerup(GameObject):
 
     def random_powerup_type(self, context):
         # drop specific powerups in debug mode
-        # if context.debug:
-        #     return self.debug_specific_powerup()
-        return self.debug_specific_powerup()
+        if context.debug:
+            return self.debug_specific_powerup()
 
         # Keep selecting until it's a valid powerup type
         while True:

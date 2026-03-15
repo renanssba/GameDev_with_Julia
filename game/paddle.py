@@ -57,8 +57,8 @@ class Paddle(GameObject):
 
         # Mouse input
         if self.input_type == InputType.MOUSE:
-            mouse_pos_x = pygame.mouse.get_pos()[0] # Raw mouse posisition
-            mouse_pos_x -= self.context.screen.x # Remove the screen offset
+            mouse_pos_x = self.context.raw_mouse_x - self.context.screen.x
+            # raw mouse position less the screen offset
             dist_x = mouse_pos_x - self.body_center().x
 
             dist_x = max(-self.move_speed, min(dist_x, self.move_speed))

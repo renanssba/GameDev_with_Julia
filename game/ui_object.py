@@ -37,7 +37,7 @@ class UiObject(GameObject):
 
 
 class UiLabel(UiObject):
-    def __init__(self, x, y, text, font, context, color=GameConstants.COLOR_UI_BASIC.value, size=22):
+    def __init__(self, x, y, text, font, context, color=GameConstants.COLOR_UI_BASIC.value, size=20):
         self.text = text
         self.font = font
         self.color = color
@@ -74,8 +74,33 @@ class UiLabel(UiObject):
         self.spritesheet_height = size_render.height
         self.update_body_from_image(self.body.x, self.body.y)
 
+    def update_text_color(self, color):
+        self.color = color
+        Text = renpy.store.Text
+        self._text_displayable = Text(self.text, size=self.text_size, color=color_to_hex(self.color))
+        self.img = self._text_displayable
+        renpy.exports.redraw(self, 0)
+
     def render(self, width, height, st, at):
         return super().render(width, height, st, at)
+
+
+class UiOverlay(UiObject):
+    """Overlay de fundo semi-transparente (ex.: para escurecer o fundo de um painel)."""
+    def __init__(self, context, layer_name, color=(0, 0, 0, 128)):
+        super().__init__(0, 0, "", context)
+        self.layer_name = layer_name
+        self._color = color
+        self.body.width = context.screen.width
+        self.body.height = context.screen.height
+
+    def render(self, width, height, st, at):
+        from renpy.display.render import Render
+        from renpy.display.imagelike import Solid
+        solid = Solid(self._color)
+        r = Render(int(self.body.width), int(self.body.height))
+        r.place(solid, 0, 0, int(self.body.width), int(self.body.height), st=st, at=at)
+        return r
 
 
 class UiBar(UiObject):

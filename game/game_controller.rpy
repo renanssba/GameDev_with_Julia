@@ -8,6 +8,8 @@ init -1 python:
     from brick import Brick
     from game_object import GameObject
     from game_context import GameContext
+    from ui_panel import UiPanel
+    from ui_gameplay_panel import UiGameplayPanel
     from constants import GameConstants
     from sound_manager import SoundManager
     from game_context import GameState
@@ -30,8 +32,12 @@ init -1 python:
             # Initialize sound
             self.game.sound_manager = SoundManager()
 
-            # DEBUG PRINT ALL FILES
-            # self.print_list_files()
+            # Panels first (so they exist even if stage setup fails)
+            # self.title_ui = UiTitlePanel(self.game)
+            self.gameplay_panel = UiGameplayPanel(self.game)
+            # self.pause_ui = UiPausePanel(self.game)
+            # self.options_panel = UiOptionsPanel(self.game)
+            # self.leaderboard_panel = UiLeaderboardPanel(self.game)
             
             # Setup stage (player, sound, level)
             self.stage_controller = StageController(self.game)
@@ -40,13 +46,28 @@ init -1 python:
             # Initialize game-wide effects
             self.effect_controller = EffectController(self)
 
+            # End card panels
+            # self.victory_panel = UiEndCardPanel(self.game.ui_font_bold, ["YOU WIN!", "Score 1000"], self.game)
+            # self.defeat_panel = UiEndCardPanel(self.game.ui_font_bold, ["GAME OVER", "Try again", "Score 1000"], self.game)
+
+            # self.victory_panel.show_panel = (lambda: self.game.sound_manager.play_music(SfxType.VICTORY_MUSIC))
+            # self.defeat_panel.show_panel = (lambda: self.game.sound_manager.stop_music())
+
+            # DEBUG PRINT ALL FILES
+            self.print_list_files()
+
             # Initialize last frame time
             self.last_st = 0.0
 
-            self.current_panel = None
+            self.panel_list = []
 
             # DEBUG
-            self.game.debug = False
+            # self.game.debug = True
+            # if(self.game.debug):
+            #     self.open_panel(self.gameplay_panel)
+            # else:
+            #     self.open_panel(self.title_ui)
+            self.open_panel(self.gameplay_panel)
 
 
         def is_paused(self):
@@ -54,6 +75,32 @@ init -1 python:
 
         def is_running(self):
             return self.game._state == GameState.RUNNING
+
+        def tick_frame(self, w, h, st, at):
+            # game context variables
+            self.game.w = w
+            self.game.h = h
+            self.game.st = st
+            self.game.at = at
+            self.game.delta_time = float(st) - float(self.last_st)
+            # print("st: ", st, " last_st: ", self.last_st, " delta_time: ", self.game.delta_time)
+            self.last_st = st
+
+            self.game._unscaled_frame += 1
+
+            self.game.delta_time = self.game._clock.tick(60) / 1000
+            self.game.delta_time = max(0.01, min(0.1, self.game.delta_time))
+
+            if self.effect_controller.has_effect(EffectType.HITSTOP):
+                intensity = self.effect_controller.get_effect(EffectType.HITSTOP).intensity
+                renpy.redraw(self, intensity / 60.0)
+                return
+            
+            renpy.redraw(self, 0)
+
+            if not self.is_running():
+                return
+            self.game._current_frame += 1
 
 
         # Game loop (Ren'Py chama render a cada frame)
@@ -75,9 +122,6 @@ init -1 python:
                 self.check_victory()
                 self.check_defeat_or_revive()
 
-            # cria main_render que conterá o jogo inteiro
-            self.game.main_render = renpy.Render(self.game.w, self.game.h)
-
             # cada GameObject faz blit de si no main_render.
             self.render_everything()
 
@@ -90,10 +134,113 @@ init -1 python:
                 objs.extend(obj.visit())
             return objs
 
+        
 
+
+        def gain_score(self, amount, obj):
+            self.game.score += amount
+            self.gameplay_panel.update_ui()
+            if obj is not None:
+                obj.spawn_text_particle(f"+{amount}")
+            else:
+                self.game.player.spawn_text_particle(f"+{amount}")
+
+        def update_ui(self):
+            self.gameplay_panel.update_ui()
+
+        ### PHYSICS ###
+        def apply_physics_to_all(self):
+            for obj in self.game.game_objects:
+                obj.apply_physics()
+                obj.process_inputs()
+            self.effect_controller.update()
+            
+        
+        ### RENDERING ###
+        def render_everything(self):
+            self.clear_screen()
+            # renderizar objects
+            for obj in self.game.game_objects:
+                obj.execute_render()
+            if self.current_panel is not None:
+                self.current_panel.execute_render()
+            self.merge_all_layers()
+
+        def clear_screen(self):
+            # cria main_render que conterá o jogo inteiro
+            self.game.main_render = renpy.Render(self.game.w, self.game.h)
+            self.game._background_layer = renpy.Render(self.game.w, self.game.h)
+            self.game._effects_back_layer = renpy.Render(self.game.w, self.game.h)
+            self.game._foreground_layer = renpy.Render(self.game.w, self.game.h)
+            self.game._effects_front_layer = renpy.Render(self.game.w, self.game.h)
+            self.game._ui_layer = renpy.Render(self.game.w, self.game.h)
+
+            color_game_space = GameConstants.COLOR_GAME_SPACE.value
+            color_game_space_border = GameConstants.COLOR_GAME_SPACE_BORDER.value
+            color_transparent = GameConstants.COLOR_TRANSPARENT.value
+            color_black = GameConstants.COLOR_RAW_BLACK.value
+            
+            # self.game._background_layer.fill(color_transparent)
+
+            
+        def merge_all_layers(self):
+            self.game.main_render.blit(self.game._background_layer, (0, 0))
+            self.game.main_render.blit(self.game._effects_back_layer, (0, 0))
+            self.game.main_render.blit(self.game._foreground_layer, (0, 0))
+            self.game.main_render.blit(self.game._effects_front_layer, (0, 0))
+            self.game.main_render.blit(self.game._ui_layer, (0, 0))
+
+
+
+        ### FLOW AND MISC EFFECTS ###
+        def set_game_state(self, game_state):
+            self.game.set_state(game_state)
+            match game_state:
+                case GameState.RUNNING:
+                    self.stage_controller.reset_stage()
+                    self.open_panel(self.gameplay_panel)
+                case GameState.PAUSED:
+                    self.open_panel(self.pause_ui)
+                case GameState.OPTIONS:
+                    self.open_panel(self.options_panel)
+                case GameState.LEADERBOARD:
+                    self.open_panel(self.leaderboard_panel)
+                case GameState.VICTORY:
+                    self.close_all_panels()
+                    self.open_panel(self.title_ui)
+                    self.open_panel(self.victory_panel)
+                case GameState.DEFEAT:
+                    self.close_all_panels()
+                    self.open_panel(self.title_ui)
+                    self.open_panel(self.defeat_panel)
+
+        @property
+        def current_panel(self):
+            return self.panel_list[0] if self.panel_list else None
+
+        def open_panel(self, panel):
+            self.panel_list.insert(0, panel)
+            panel.show_panel()
+
+        def close_current_panel(self):
+            if not self.panel_list:
+                return
+            closing_panel = self.panel_list.pop(0)
+            closing_panel.hide_panel()
+            if self.panel_list:
+                self.panel_list[0].show_panel()
+                if self.panel_list[0] == self.gameplay_panel:
+                    self.game.set_state(GameState.RUNNING)
+            else:
+                self.close_all_panels()
+
+        def close_all_panels(self):
+            while self.panel_list:
+                self.close_current_panel()
 
         def is_still_running(self):
-            return True
+            return self.panel_list != []
+
 
         def multiply_ball(self):
             free_balls = []
@@ -113,7 +260,7 @@ init -1 python:
                 random_ball = random.choice(all_balls)
                 random_ball.be_launched()
                 random_ball.multiply_ball()
-    
+
         def check_victory(self):
             if not self.any_of_this_type(Brick):
                 self.victory_panel.options[1].ui_label.update_text(f"Score {self.game.score}")
@@ -127,6 +274,7 @@ init -1 python:
                 else:
                     self.defeat_panel.options[2].ui_label.update_text(f"Score {self.game.score}")
                     self.set_game_state(GameState.DEFEAT)
+
 
 
         ### TIMED EFFECTS ###
@@ -150,69 +298,32 @@ init -1 python:
                 if isinstance(obj, type):
                     return True
             return False
-        
-    
 
-        def gain_score(self, amount, obj):
-            self.game.score += amount
-            # self.gameplay_panel.update_ui()
-            if obj is not None:
-                obj.spawn_text_particle(f"+{amount}")
+
+        ### OPTIONS ACTIONS ###
+        def toggle_fullscreen(self):
+            """Alterna o modo fullscreen da janela usando o display atual (SCALED)."""
+            pygame.display.toggle_fullscreen()
+
+        def toggle_resolution(self):
+            """
+            Alterna a escala da janela entre 1x, 2x e 3x da resolução base,
+            mantendo o game space centralizado.
+            """
+            current_scale = round(self.game.current_screen_scale())
+            if current_scale <= 1:
+                new_scale = 2
+            elif current_scale == 2:
+                new_scale = 3
             else:
-                self.game.player.spawn_text_particle(f"+{amount}")
-            return
-
-        def update_ui(self):
-            # self.gameplay_panel.update_ui()
-            pass
-        
-
-        ### PHYSICS ###
-        def apply_physics_to_all(self):
-            for obj in self.game.game_objects:
-                obj.apply_physics()
-                obj.process_inputs()
-            self.effect_controller.update()
-            
-        
-        ### RENDERING ###
-        def render_everything(self):
-            # renderizar objects
-            for obj in self.game.game_objects:
-                obj.execute_render()
+                new_scale = 1
 
 
-        def tick_frame(self, w, h, st, at):
-            # game context variables
-            self.game.w = w
-            self.game.h = h
-            self.game.st = st
-            self.game.at = at
-            self.game.delta_time = float(st) - float(self.last_st)
-            # print("st: ", st, " last_st: ", self.last_st, " delta_time: ", self.game.delta_time)
-            self.last_st = st
 
-            self.game._unscaled_frame += 1
-
-            self.game.delta_time = self.game._clock.tick(60) / 1000
-            self.game.delta_time = max(0.01, min(0.1, self.game.delta_time))
-
-            # TODO: re-implement hitstop
-            if self.effect_controller.has_effect(EffectType.HITSTOP):
-                intensity = self.effect_controller.get_effect(EffectType.HITSTOP).intensity
-                # intensity = freeze duration in frames
-                # self.game._clock.tick(60)
-                renpy.redraw(self, intensity / 60.0)
-                return
-            
-            renpy.redraw(self, 0)
-
-            if not self.is_running():
-                return
-            self.game._current_frame += 1
-
-
+        ### INPUTS ###
         def event(self, ev, x, y, st):
+            self.game.raw_mouse_x = x
+            self.game.raw_mouse_y = y
             if hasattr(ev, "type"):
                 if ev.type == pygame.KEYUP:
                     if getattr(ev, "key", None) == pygame.K_RIGHT:
@@ -227,12 +338,16 @@ init -1 python:
                         self.game.left_pressed = True
                     elif getattr(ev, "key", None) == pygame.K_SPACE:
                         self.game.player.action_button_pressed()
+
+                    elif getattr(ev, "key", None) == pygame.K_F12:
+                        self.game.debug = not self.game.debug
+
                     elif getattr(ev, "key", None) == pygame.K_ESCAPE:
                         renpy.end_interaction("quit_minigame")
             return None
 
 
-        ### DEBUG FUNCTIONS ###
+        ### DEBUG ###
         def debug_event(self, ev):
             # debug: inspeciona o objeto de evento do Ren'Py
             print("=== EVENT DEBUG START ===")
@@ -258,14 +373,11 @@ init -1 python:
                 print("dir(ev) subset =", attr_names[:20])
             except Exception as e:
                 print("dir(ev) error:", e)
-
             print("=== EVENT DEBUG END ===")
 
         def print_list_files(self):
             print("")
-            print("")
             print("LISTING ALL FILES IN THE GAME FOLDER!!!")
-            print("")
             print("")
             list_of_files = renpy.list_files()
             for file in list_of_files:

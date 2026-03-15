@@ -1,4 +1,5 @@
 import pygame
+import renpy.display.im as im
 from enum import Enum
 from constants import GameConstants
 
@@ -53,21 +54,22 @@ class GameContext:
         self.st = 0
         self.at = 0
         self.delta_time = 0.0
+        self.raw_mouse_x = 0
+        self.raw_mouse_y = 0
 
         # Objects
         self.game_objects = []
-        self.ui_objects = []
         self.player = None
         self.sound_manager = None
         self.brick_coin_chance = GameConstants.BRICK_COIN_CHANCE.value
         self.brick_powerup_chance = GameConstants.BRICK_POWERUP_CHANCE.value
 
         # Surface layers
-        self._background_layer = pygame.Surface((width, height), pygame.SRCALPHA)
-        self._effects_back_layer = pygame.Surface((width, height), pygame.SRCALPHA)
-        self._foreground_layer = pygame.Surface((width, height), pygame.SRCALPHA)
-        self._effects_front_layer = pygame.Surface((width, height), pygame.SRCALPHA)
-        self._ui_layer = pygame.Surface((width, height), pygame.SRCALPHA)
+        self._background_layer = None
+        self._effects_back_layer = None
+        self._foreground_layer = None
+        self._effects_front_layer = None
+        self._ui_layer = None
 
         # Initialize fonts // TODO: Use Ren'Py fonts
         # self.ui_font_bold = pygame.font.Font(GameConstants.UI_FONT_BOLD.value, 20)
@@ -76,6 +78,9 @@ class GameContext:
         self.ui_font_bold = None
         self.ui_font = None
         self.score_font = None
+
+        # Debug img
+        self.debug_frame = im.Image("sprites/debug.png")
 
         # Score and Lives
         self.score = 0
@@ -121,27 +126,6 @@ class GameContext:
         else:
             return None
 
-    def clear_screen(self):
-        color_game_space = GameConstants.COLOR_GAME_SPACE.value
-        color_game_space_border = GameConstants.COLOR_GAME_SPACE_BORDER.value
-        color_transparent = GameConstants.COLOR_TRANSPARENT.value
-        color_black = GameConstants.COLOR_RAW_BLACK.value
-        self._screen.fill(color_black)
-        pygame.draw.rect(self._screen, color_game_space, self._game_space, 0)
-        pygame.draw.rect(self._screen, color_game_space_border, self._game_space, 2)
-        self._background_layer.fill(color_transparent)
-        self._effects_back_layer.fill(color_transparent)
-        self._foreground_layer.fill(color_transparent)
-        self._effects_front_layer.fill(color_transparent)
-        self._ui_layer.fill(color_transparent)
-
-    def render_all_layers(self):
-        self._screen.blit(self._background_layer, (0, 0))
-        self._screen.blit(self._effects_back_layer, (0, 0))
-        self._screen.blit(self._foreground_layer, (0, 0))
-        self._screen.blit(self._effects_front_layer, (0, 0))
-        self._screen.blit(self._ui_layer, (0, 0))
-        pygame.display.flip()
 
     def set_state(self, value):
         self._state = value

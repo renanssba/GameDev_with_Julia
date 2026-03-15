@@ -137,9 +137,12 @@ class GameObject(Displayable):
         my_render = self.render(self.context.w, self.context.h, self.context.st, self.context.at)
         rw, rh = my_render.width, my_render.height
         
-        renderX = int(self.body.x) - int((self.body.width) * self.self_xalign)
-        renderY = int(self.body.y) - int((self.body.height) * self.self_yalign)
-        self.context.main_render.blit(my_render, (renderX, renderY))
+        renderX = int(self.body.x) - int((self.body.width) * self.self_xalign) + self.context.screen.x
+        renderY = int(self.body.y) - int((self.body.height) * self.self_yalign) + self.context.screen.y
+        
+        my_layer = self.context.get_layer(self.layer_name)
+        if my_layer is not None:
+            my_layer.blit(my_render, (renderX, renderY))
     
     def render(self, width, height, st, at):
         if hasattr(self, 'render_condition') and self.render_condition is not None:
@@ -161,7 +164,7 @@ class GameObject(Displayable):
         return my_render
 
     def draw_bounding_box(self, prev_render):
-        frame = im.Image("sprites/debug.png")
+        frame = self.context.debug_frame
         return self.framed_render(frame, prev_render)
 
 

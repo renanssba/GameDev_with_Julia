@@ -77,17 +77,13 @@ class UiPanel(UiObject):
     
 
     ### INPUT PROCESSING ###
-    def process_inputs(self):
-        for event in pygame.event.get():
-            self.process_generic_inputs(event)
-            self.process_panel_specific_inputs(event)
-            self.process_debug_inputs(event)
-            if len(self.options) > 0:
-                self.process_navigation_inputs(event)
+    def process_inputs(self, event):
+        self.process_generic_inputs(event)
+        self.process_panel_specific_inputs(event)
+        self.process_debug_inputs(event)
+        if len(self.options) > 0:
+            self.process_navigation_inputs(event)
         
-        for obj in self.context.game_objects:
-            obj.process_inputs()
-
     def process_panel_specific_inputs(self, event):
         pass
 
@@ -151,7 +147,7 @@ class UiPanel(UiObject):
                 
 
     def check_if_option_is_hovered(self, option):
-        mouse_pos = pygame.mouse.get_pos()
+        mouse_pos = (self.context.raw_mouse_x, self.context.raw_mouse_y)
         mouse_pos_x = mouse_pos[0] - self.context.screen.x
         mouse_pos_y = mouse_pos[1] - self.context.screen.y
         if option.ui_label.body.collidepoint(mouse_pos_x, mouse_pos_y):

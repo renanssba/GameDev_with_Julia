@@ -44,8 +44,49 @@ class Paddle(GameObject):
 
         self.prepare_ball()
 
-    ### INPUTS ###
-    def process_inputs(self):
+
+    ### RENDERING ###
+    def update_sprite(self):
+        if self.effect_controller.has_effect(EffectType.SHOOTING_PADDLE):
+            self.img = self.img_shooter
+        elif self.effect_controller.has_effect(EffectType.STICKY_PADDLE):
+            self.img = self.img_sticky
+        else:
+            self.img = self.img_default
+
+
+    def apply_effect(self, effect_type: EffectType):
+        super().apply_effect(effect_type)
+        self.update_sprite()
+
+    def remove_effect(self, effect_type: EffectType):
+        super().remove_effect(effect_type)
+        self.update_sprite()
+
+
+    ### PHYSICS ###
+    def apply_physics(self):
+        # print("applying physics to paddle.velocity: " + str(self.velocity) + ", frame(" + str(self.context.current_frame) + ")")
+        self.define_movement()
+
+        if not self.touching_ground():
+            gravity_scale = 1.0
+            if self.velocity.y < 0:
+                gravity_scale = 1.5
+            self.velocity += self.gravity * gravity_scale #* delta_time
+        super().apply_physics()
+        if self.limit_to_screen():
+            self.velocity.x = 0
+        if self.touching_ground():
+            self.velocity.y = 0
+
+        # UPDATE EFFECTS
+        self.effect_controller.update()
+        if self.effect_controller.has_effect_activating(EffectType.SHOOTING_PADDLE):
+            self.spawn_shots()
+
+            
+    def define_movement(self):
         if not self.context.game_controller.is_running():
             return
         
@@ -70,47 +111,6 @@ class Paddle(GameObject):
 
     def keyboard_used(self):
         self.input_type = InputType.KEYBOARD
-
-
-    ### RENDERING ###
-    def update_sprite(self):
-        if self.effect_controller.has_effect(EffectType.SHOOTING_PADDLE):
-            self.img = self.img_shooter
-        elif self.effect_controller.has_effect(EffectType.STICKY_PADDLE):
-            self.img = self.img_sticky
-        else:
-            self.img = self.img_default
-
-
-    def apply_effect(self, effect_type: EffectType):
-        super().apply_effect(effect_type)
-        self.update_sprite()
-
-    def remove_effect(self, effect_type: EffectType):
-        super().remove_effect(effect_type)
-        self.update_sprite()
-
-
-
-
-    ### PHYSICS ###
-    def apply_physics(self):
-        # print("applying physics to paddle.velocity: " + str(self.velocity) + ", frame(" + str(self.context.current_frame) + ")")
-        if not self.touching_ground():
-            gravity_scale = 1.0
-            if self.velocity.y < 0:
-                gravity_scale = 1.5
-            self.velocity += self.gravity * gravity_scale #* delta_time
-        super().apply_physics()
-        if self.limit_to_screen():
-            self.velocity.x = 0
-        if self.touching_ground():
-            self.velocity.y = 0
-
-        # UPDATE EFFECTS
-        self.effect_controller.update()
-        if self.effect_controller.has_effect_activating(EffectType.SHOOTING_PADDLE):
-            self.spawn_shots()
 
 
     ### CHECKS ###

@@ -194,11 +194,6 @@ class GameObject(Displayable):
         self.context.game_objects.append(text_particle)
 
 
-    ### INPUTS STUB ###
-    def process_inputs(self):
-        pass
-
-
     ### PHYSICS AND BODY ###
     def apply_physics(self, time_scale=1.0):
         self.body.x += self.velocity.x * time_scale

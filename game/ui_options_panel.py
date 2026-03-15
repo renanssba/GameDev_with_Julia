@@ -1,0 +1,153 @@
+import pygame
+import json
+import os
+from constants import GameConstants
+from sound_manager import SfxType
+from game_context import LayerName
+from ui_panel import UiPanel
+from ui_object import UiOption, UiLabel, UiOverlay, UiBar
+
+class OptionsContainer:
+    def __init__(self, text, function):
+        self.text = text
+        self.function = function
+
+class UiOptionsPanel(UiPanel):
+    def __init__(self, context):
+        options = [
+            UiOption("Master", self.toggle_master, context),
+            UiOption("Sound", self.toggle_sound, context),
+            UiOption("Music", self.toggle_music, context),
+            UiOption("Fullscreen", self.toggle_fullscreen, context),
+            UiOption("Back", self.close_panel, context),
+        ]
+        super().__init__("Options", options, context)
+
+        self.title.body.y -= 10
+
+        # initialize values, load from file if exists
+        self.option_values = [7, 7, 7, self.context.is_fullscreen(), '']
+        self.load_options()
+
+        # self.option_values = [7, 7, 7, 1, self.context.is_fullscreen(), '']
+        self.option_values_labels = []
+        for i, option in enumerate(self.options):
+            option.ui_label.align_body_left()
+            option.ui_label.body.x -= 30
+            # option.ui_label.body.y -= 54
+
+            if i < 3:
+                new_bar = UiBar(self.context, "bar_", pygame.Rect(option.ui_label.body.x, option.ui_label.body.y, 100, 16))
+                new_bar.max_value = 10
+                new_bar.set_value(self.option_values[i])
+                new_bar.set_body_center(self.context.screen.width/2, option.ui_label.body_center().y)
+                new_bar.align_body_right()
+                self.option_values_labels.append(new_bar)
+            else:
+                new_label = UiLabel(0, 0, str(self.option_values[i]), self.context.ui_font_bold, self.context)
+                new_label.set_body_center(self.context.screen.width/2, option.ui_label.body_center().y)
+                new_label.align_body_right()
+                new_label.update_text_color(GameConstants.COLOR_UI_BASIC.value)
+                self.option_values_labels.append(new_label)
+        self.update_labels()
+
+        self.overlay = UiOverlay(context, LayerName.UI.value, GameConstants.COLOR_GAME_SPACE.value)
+
+
+    def render(self):
+        super().render()
+        for i, option_value_label in enumerate(self.option_values_labels):
+            option_value_label.render()
+
+    def process_panel_specific_inputs(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RIGHT:
+                self.confirm_input()
+            elif event.key == pygame.K_LEFT:
+                self.context.sound_manager.play_sfx(SfxType.UI_CONFIRM)
+                if self.cursor < 3:
+                    self.option_values[self.cursor] -= 1
+                    self.update_volume_values()
+                    self.update_labels()
+                # elif self.cursor == 3:
+                #     self.toggle_resolution_left()
+                elif self.cursor == 3:
+                    self.toggle_fullscreen()
+        pass
+    
+    def toggle_master(self):
+        self.option_values[0] += 1
+        self.update_volume_values()
+        self.update_labels()
+    
+    def toggle_sound(self):
+        self.option_values[1] += 1
+        self.update_volume_values()
+        self.update_labels()
+    
+    def toggle_music(self):
+        self.option_values[2] += 1
+        self.update_volume_values()
+        self.update_labels()
+
+    def update_volume_values(self):
+        self.option_values[0] = max(0, min(self.option_values[0], 10))
+        self.option_values[1] = max(0, min(self.option_values[1], 10))
+        self.option_values[2] = max(0, min(self.option_values[2], 10))
+        self.context.sound_manager.set_volumes(self.option_values[0], self.option_values[1], self.option_values[2])
+
+    def toggle_resolution_right(self):
+        self.option_values[3] = (self.option_values[3] % 3) + 1
+        self.update_labels()
+
+    def toggle_resolution_left(self):
+        self.option_values[3] = (self.option_values[3]+2) % 3
+        if self.option_values[3] == 0:
+            self.option_values[3] = 3
+        self.update_labels()
+    
+    def toggle_fullscreen(self):
+        self.context.toggle_fullscreen()
+        self.option_values[3] = self.context.is_fullscreen()
+        self.update_labels()
+
+    def update_labels(self):
+        for i, option_value_label in enumerate(self.option_values_labels):
+            if isinstance(option_value_label, UiLabel):
+                option_value_label.update_text(str(self.option_values[i]))
+            elif isinstance(option_value_label, UiBar):
+                option_value_label.set_value(self.option_values[i])
+
+    def cancel_input(self):
+        super().cancel_input()
+        self.close_panel()
+
+    def close_panel(self):
+        self.save_options()
+        self.context.game_controller.close_current_panel()
+
+
+    def save_options(self):
+        data = {
+            "master_volume": self.option_values[0],
+            "sfx_volume": self.option_values[1],
+            "music_volume": self.option_values[2],
+            "fullscreen": self.option_values[3],
+        }
+        with open(GameConstants.OPTIONS_FILE.value, "w", encoding="utf-8") as file:
+            json.dump(data, file)
+
+    def load_options(self):
+        if not os.path.exists(GameConstants.OPTIONS_FILE.value):
+            return
+        with open(GameConstants.OPTIONS_FILE.value, "r", encoding="utf-8") as file:
+            data = json.load(file)
+        self.option_values[0] = data["master_volume"]
+        self.option_values[1] = data["sfx_volume"]
+        self.option_values[2] = data["music_volume"]
+        self.option_values[3] = data["fullscreen"]
+
+        # apply loaded values to the context
+        self.context.sound_manager.set_volumes(self.option_values[0], self.option_values[1], self.option_values[2])
+        if self.context.is_fullscreen() != data["fullscreen"]:
+            self.context.toggle_fullscreen()

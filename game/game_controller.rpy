@@ -1,22 +1,23 @@
 init -1 python:
-    import os
-    import random
     import pygame
-    from renpy.display.core import IgnoreEvent
-    from paddle import Paddle
+    import random
+    from constants import GameConstants
     from ball import Ball
     from brick import Brick
-    from game_object import GameObject
-    from game_context import GameContext
-    from ui_panel import UiPanel
-    from ui_gameplay_panel import UiGameplayPanel
-    from constants import GameConstants
-    from sound_manager import SoundManager
-    from game_context import GameState
+    from game_context import GameContext, GameState
     from stage_controller import StageController
+    from ui_info_panel import UiInfoPanel
+    from ui_gameplay_panel import UiGameplayPanel
+    from ui_pause_panel import UiPausePanel
+    from ui_title_panel import UiTitlePanel
+    from ui_options_panel import UiOptionsPanel
+    from ui_leaderboard_panel import UiLeaderboardPanel
+    from ui_end_card_panel import UiEndCardPanel
+    from sound_manager import SoundManager, SfxType
     from effects import EffectType
     from effect_controller import EffectController
     import renpy.display.im as im
+    from renpy.display.core import IgnoreEvent
 
     class GameController(renpy.Displayable):
         def __init__(self):
@@ -33,11 +34,11 @@ init -1 python:
             self.game.sound_manager = SoundManager()
 
             # Panels first (so they exist even if stage setup fails)
-            # self.title_ui = UiTitlePanel(self.game)
+            self.title_ui = UiTitlePanel(self.game)
             self.gameplay_panel = UiGameplayPanel(self.game)
-            # self.pause_ui = UiPausePanel(self.game)
-            # self.options_panel = UiOptionsPanel(self.game)
-            # self.leaderboard_panel = UiLeaderboardPanel(self.game)
+            self.pause_ui = UiPausePanel(self.game)
+            self.options_panel = UiOptionsPanel(self.game)
+            self.leaderboard_panel = UiLeaderboardPanel(self.game)
             
             # Setup stage (player, sound, level)
             self.stage_controller = StageController(self.game)
@@ -47,11 +48,11 @@ init -1 python:
             self.effect_controller = EffectController(self)
 
             # End card panels
-            # self.victory_panel = UiEndCardPanel(self.game.ui_font_bold, ["YOU WIN!", "Score 1000"], self.game)
-            # self.defeat_panel = UiEndCardPanel(self.game.ui_font_bold, ["GAME OVER", "Try again", "Score 1000"], self.game)
+            self.victory_panel = UiEndCardPanel(self.game.ui_font_bold, ["YOU WIN!", "Score 1000"], self.game)
+            self.defeat_panel = UiEndCardPanel(self.game.ui_font_bold, ["GAME OVER", "Try again", "Score 1000"], self.game)
 
-            # self.victory_panel.show_panel = (lambda: self.game.sound_manager.play_music(SfxType.VICTORY_MUSIC))
-            # self.defeat_panel.show_panel = (lambda: self.game.sound_manager.stop_music())
+            self.victory_panel.show_panel = (lambda: self.game.sound_manager.play_music(SfxType.VICTORY_MUSIC))
+            self.defeat_panel.show_panel = (lambda: self.game.sound_manager.stop_music())
 
             # DEBUG PRINT ALL FILES
             self.print_list_files()
@@ -63,11 +64,11 @@ init -1 python:
 
             # DEBUG
             # self.game.debug = True
-            # if(self.game.debug):
-            #     self.open_panel(self.gameplay_panel)
-            # else:
-            #     self.open_panel(self.title_ui)
-            self.open_panel(self.gameplay_panel)
+            if(self.game.debug):
+                self.open_panel(self.gameplay_panel)
+            else:
+                self.open_panel(self.title_ui)
+            # self.open_panel(self.gameplay_panel)
 
 
         def is_paused(self):
@@ -112,10 +113,6 @@ init -1 python:
             if self.game.sound_manager is not None:
                 self.game.sound_manager.update()
 
-            # processar inputs do painel atual
-            if self.current_panel is not None:
-                self.current_panel.process_inputs()
-
             # update all game objects
             if self.is_running():
                 self.apply_physics_to_all()
@@ -152,7 +149,6 @@ init -1 python:
         def apply_physics_to_all(self):
             for obj in self.game.game_objects:
                 obj.apply_physics()
-                obj.process_inputs()
             self.effect_controller.update()
             
         
@@ -322,28 +318,33 @@ init -1 python:
 
         ### INPUTS ###
         def event(self, ev, x, y, st):
+            # safeguard contra eventos estranhos
+            if not hasattr(ev, "type"):
+                print("ERROR: received strange event with no type: ", ev)
+                return
+
+            # atualizar posição raw do mouse
             self.game.raw_mouse_x = x
             self.game.raw_mouse_y = y
-            if hasattr(ev, "type"):
-                if ev.type == pygame.KEYUP:
-                    if getattr(ev, "key", None) == pygame.K_RIGHT:
-                        self.game.right_pressed = False
-                    elif getattr(ev, "key", None) == pygame.K_LEFT:
-                        self.game.left_pressed = False
 
-                if ev.type == pygame.KEYDOWN:
-                    if getattr(ev, "key", None) == pygame.K_RIGHT:
-                        self.game.right_pressed = True
-                    elif getattr(ev, "key", None) == pygame.K_LEFT:
-                        self.game.left_pressed = True
-                    elif getattr(ev, "key", None) == pygame.K_SPACE:
-                        self.game.player.action_button_pressed()
+            # atualizar estado de pressão de teclas
+            if ev.type == pygame.KEYUP:
+                if getattr(ev, "key", None) == pygame.K_RIGHT:
+                    self.game.right_pressed = False
+                elif getattr(ev, "key", None) == pygame.K_LEFT:
+                    self.game.left_pressed = False
+            if ev.type == pygame.KEYDOWN:
+                if getattr(ev, "key", None) == pygame.K_RIGHT:
+                    self.game.right_pressed = True
+                elif getattr(ev, "key", None) == pygame.K_LEFT:
+                    self.game.left_pressed = True
 
-                    elif getattr(ev, "key", None) == pygame.K_F12:
-                        self.game.debug = not self.game.debug
+            # processar inputs no painel atual
+            if self.current_panel is not None:
+                self.current_panel.process_inputs(ev)
 
-                    elif getattr(ev, "key", None) == pygame.K_ESCAPE:
-                        renpy.end_interaction("quit_minigame")
+            if not self.is_still_running():
+                renpy.end_interaction("quit_minigame")
             return None
 
 

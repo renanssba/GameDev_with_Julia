@@ -38,15 +38,6 @@ label start:
             jump end
 
 label minigame:
-
-    # play music [ "songs/gameplay_intro.mp3", "songs/gameplay_loop.mp3" ]
-
-    # Checar se está tocando: renpy.music.get_playing(channel='music')
-    #   retorna o nome do arquivo atual ou None. Ex. em script:
-    #   $ tocando = renpy.music.get_playing(channel='music')
-    #   if tocando:  # ou  if renpy.music.get_playing(channel='music'):
-    #       "Música tocando: [tocando]"
-
     julia "Minigame start!"
 
     $ quick_menu = False

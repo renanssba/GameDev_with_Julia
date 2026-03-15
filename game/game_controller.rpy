@@ -40,6 +40,8 @@ init -1 python:
             # Initialize game-wide effects
             self.effect_controller = EffectController(self)
 
+            self.current_panel = None
+
             # Initialize last frame time
             self.last_st = 0.0
 
@@ -56,8 +58,19 @@ init -1 python:
             # tick frame
             self.tick_frame(w, h, st, at)
 
+            # Atualiza música (transição de intro para loop infinito)
+            if self.game.sound_manager is not None:
+                self.game.sound_manager.update()
+
+            # processar inputs do painel atual
+            if self.current_panel is not None:
+                self.current_panel.process_inputs()
+
             # update all game objects
-            self.update()
+            if self.is_running():
+                self.apply_physics_to_all()
+                self.check_victory()
+                self.check_defeat_or_revive()
 
             # cria main_render que conterá o jogo inteiro
             self.game.main_render = renpy.Render(self.game.w, self.game.h)
@@ -97,6 +110,20 @@ init -1 python:
                 random_ball = random.choice(all_balls)
                 random_ball.be_launched()
                 random_ball.multiply_ball()
+    
+        def check_victory(self):
+            if not self.any_of_this_type(Brick):
+                self.victory_panel.options[1].ui_label.update_text(f"Score {self.game.score}")
+                self.set_game_state(GameState.VICTORY)
+
+        def check_defeat_or_revive(self):
+            if not self.any_of_this_type(Ball):
+                if self.game.lives > 0:
+                    self.game.lives -= 1
+                    self.game.player.prepare_ball()
+                else:
+                    self.defeat_panel.options[2].ui_label.update_text(f"Score {self.game.score}")
+                    self.set_game_state(GameState.DEFEAT)
 
 
         ### TIMED EFFECTS ###
@@ -138,11 +165,14 @@ init -1 python:
         
 
         ### PHYSICS ###
-        def update(self):
+        def apply_physics_to_all(self):
             for obj in self.game.game_objects:
                 obj.apply_physics()
                 obj.process_inputs()
-
+            self.effect_controller.update()
+            
+        
+        ### RENDERING ###
         def render_everything(self):
             # renderizar objects
             for obj in self.game.game_objects:
@@ -165,17 +195,18 @@ init -1 python:
             self.game.delta_time = max(0.01, min(0.1, self.game.delta_time))
 
             # TODO: re-implement hitstop
-            # if self.effect_controller.has_effect(EffectType.HITSTOP):
-            #     intensity = self.effect_controller.get_effect(EffectType.HITSTOP).intensity
-            #     # intensity = freeze duration in frames
-            #     # self.game._clock.tick(60)
-            #     time.sleep(intensity / 60.0)
-            #     return
+            if self.effect_controller.has_effect(EffectType.HITSTOP):
+                intensity = self.effect_controller.get_effect(EffectType.HITSTOP).intensity
+                # intensity = freeze duration in frames
+                # self.game._clock.tick(60)
+                renpy.redraw(self, intensity / 60.0)
+                return
             
+            renpy.redraw(self, 0)
+
             if not self.is_running():
                 return
             self.game._current_frame += 1
-            renpy.redraw(self, 0)
 
 
         def event(self, ev, x, y, st):

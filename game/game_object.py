@@ -208,9 +208,9 @@ class GameObject(Displayable):
 
 
     ### PHYSICS AND BODY ###
-    def apply_physics(self):
-        self.body.x += self.velocity.x
-        self.body.y += self.velocity.y
+    def apply_physics(self, time_scale=1.0):
+        self.body.x += self.velocity.x * time_scale
+        self.body.y += self.velocity.y * time_scale
 
         self.effect_controller.update()
 

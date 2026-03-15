@@ -37,7 +37,7 @@ define gui.about = _p("""
 ## construída. Ele deve ser somente ASCII e não deve conter espaços, dois pontos
 ## ou ponto e vírgula.
 
-define build.name = "GameDevwithJulia"
+define build.name = "GameDevWithJulia"
 
 
 ## Sons e música ###############################################################

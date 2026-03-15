@@ -81,7 +81,7 @@ class Ball(GameObject):
             return
         
         # If not stuck to paddle, apply physics normally
-        super().apply_physics()
+        super().apply_physics(self.context.time_scale)
         
         # update trail positions
         # self.trail.update(self.body_center())

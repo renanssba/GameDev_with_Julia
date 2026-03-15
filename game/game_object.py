@@ -31,8 +31,6 @@ class GameObject(Displayable):
         # Rendering
         self.layer_name = LayerName.FOREGROUND  # default layer for objects is foreground
         self.img = None
-        self.img_width = 0
-        self.img_height = 0
         self.frame_width = 0
         self.framerate = 4
         self.num_frames = 1
@@ -50,6 +48,9 @@ class GameObject(Displayable):
 
         # Physics
         self.velocity = Vector2(0, 0)
+        # Alinhamento (0.0–1.0): Default: usa body.x/body.y; 0.5 = centro
+        self.self_xalign = 0.0
+        self.self_yalign = 0.0
         self.update_body_from_image(x, y)
         
 
@@ -105,33 +106,6 @@ class GameObject(Displayable):
 
 
     ### RENDERING ###
-    def execute_render(self):
-        my_render = self.render(self.context.w, self.context.h, self.context.st, self.context.at)
-        self.context.main_render.blit(my_render, (int(self.body.x), int(self.body.y)))
-    
-
-    def render(self, width, height, st, at):
-        if hasattr(self, 'render_condition') and self.render_condition is not None:
-            if not self.render_condition():
-                return Render(0, 0)
-
-        frame = self.current_frame()
-        if frame is None:
-            return Render(0, 0)
-        else:
-            if self.body.width != self.frame_width:
-                my_render = self.framed_render(frame)
-            else:
-                my_render = self.simple_render(frame)
-
-
-        if self.context.debug:
-            blit_rect.width = self.body.width
-            pygame.draw.rect(self.context.get_layer(self.layer_name), (255, 0, 0), blit_rect, 1)
-
-        
-        return my_render
-
     def visit(self):
         if self.img is not None and callable(getattr(self.img, "render", None)):
             return [self.img]
@@ -158,41 +132,56 @@ class GameObject(Displayable):
             return 0
         return int((self.context.current_frame / self.framerate) % self.num_frames)
 
-    def render_obj(self):
+    
+    def execute_render(self):
+        my_render = self.render(self.context.w, self.context.h, self.context.st, self.context.at)
+        rw, rh = my_render.width, my_render.height
+        
+        renderX = int(self.body.x) - int((self.body.width) * self.self_xalign)
+        renderY = int(self.body.y) - int((self.body.height) * self.self_yalign)
+        self.context.main_render.blit(my_render, (renderX, renderY))
+    
+    def render(self, width, height, st, at):
         if hasattr(self, 'render_condition') and self.render_condition is not None:
             if not self.render_condition():
-                return
-
-        blit_rect = FRect(self.body.x, self.body.y, self.body.width, self.body.height)
-        blit_rect.x += self.context.screen.x
-        blit_rect.y += self.context.screen.y
+                return Render(0, 0)
 
         frame = self.current_frame()
-        if frame is not None:
-            if self.body.width != frame.get_width():
-                self.blit_3_slice(frame, blit_rect)
+        if frame is None:
+            return Render(0, 0)
+        else:
+            if self.body.width != self.frame_width:
+                my_render = self.framed_render(frame)
             else:
-                self.blit_to_layer(frame, blit_rect)
+                my_render = self.simple_render(frame)
 
         if self.context.debug:
-            blit_rect.width = self.body.width
-            pygame.draw.rect(self.context.get_layer(self.layer_name), (255, 0, 0), blit_rect, 1)
+            my_render = self.draw_bounding_box(my_render)
 
-    def simple_render(self, frame):
+        return my_render
+
+    def draw_bounding_box(self, prev_render):
+        frame = im.Image("sprites/debug.png")
+        return self.framed_render(frame, prev_render)
+
+
+    def simple_render(self, frame, my_render=None):
         obj_render = renpy_render(frame, self.context.w, self.context.h, self.context.st, self.context.at)
-        my_render =  Render(obj_render.width, obj_render.height)
+        if my_render is None:
+            my_render = Render(obj_render.width, obj_render.height)
         my_render.blit(obj_render, (0, 0))
         return my_render
 
-    def framed_render(self, frame):
-        # Cria Render do tamanho do body. Frame(0,0,0,0) escala a imagem para preencher a área.
+    def framed_render(self, frame, my_render=None):
+        # Cria Render do tamanho do body. Frame renderiza as bordas depois preenche a área.
         border_w = self.frame_width/2-1
         border_h = self.spritesheet_height/2-1
 
         w = int(self.body.width)
         h = int(self.body.height)
         framed = Frame(frame, border_w, border_h, border_w, border_h)
-        my_render = Render(w, h)
+        if my_render is None:
+            my_render = Render(w, h)
         my_render.place(framed, 0, 0, w, h, st=self.context.st, at=self.context.at)
         return my_render
 
@@ -219,7 +208,7 @@ class GameObject(Displayable):
             vel_length = self.velocity.length()
             desired_length = self.desired_vel_lgth
             if self.linear_drag != 0 and vel_length > desired_length:
-                dragged_speed = max(desired_length, vel_length - self.linear_drag)
+                dragged_speed = max(desired_length, vel_length - self.linear_drag * time_scale)
                 self.velocity.scale_to_length(dragged_speed)
 
     def collide_with(self, other):
@@ -287,6 +276,13 @@ class GameObject(Displayable):
     def set_body_center(self, x, y):
         self.body.x = x - self.body.width / 2
         self.body.y = y - self.body.height / 2
+
+    def set_align(self, xalign=None, yalign=None):
+        """Posiciona o objeto por alinhamento (0.0=esq/topo, 0.5=centro, 1.0=dir/baixo). yalign opcional."""
+        if xalign is not None:
+            self.xalign = xalign
+        if yalign is not None:
+            self.yalign = yalign
 
     def align_body_left(self):
         self.body.x -= self.body.width / 2

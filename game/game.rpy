@@ -20,6 +20,9 @@ screen ball_minigame(controller):
 
         add controller xsize GameConstants.WIDTH.value ysize GameConstants.HEIGHT.value at zoom_4, truecenter
 
+        #crie um Displayable muito simples de texto que escreva "Minigame" no centro da tela
+        # text "Vector" xalign 0.5 yalign 0.5 size 40 color "#fff"
+
 label start:
     scene bg room
     show julia happy

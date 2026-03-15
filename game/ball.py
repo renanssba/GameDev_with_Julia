@@ -4,7 +4,7 @@ import math
 
 from constants import GameConstants
 from effects import EffectType
-# from ui_object import UiLabel
+from ui_object import UiLabel
 from game_object import GameObject
 from trail_renderer import TrailRenderer
 from sound_manager import SfxType
@@ -50,9 +50,10 @@ class Ball(GameObject):
         # no particle generator by default
         self.particle_generator = None
 
-        # self.debug_label = UiLabel(0-self.context.screen.x, self.context.screen.height, "-\n-", self.context.ui_font, self.context)
-        # self.debug_label.align_body_top()
-        # self.debug_label.align_body_top()
+        self.debug_label = UiLabel(0-self.context.screen.x, self.context.screen.height, "-\n-", self.context.ui_font, self.context)
+        print("the ball label was created successfully!")
+        self.debug_label.align_body_top()
+        self.debug_label.align_body_top()
 
     def be_launched(self):
         launch_velocity = Vector2(0, -3.5)
@@ -233,10 +234,11 @@ class Ball(GameObject):
     def render(self, width, height, st, at):
         self.trail.render()
         result = super().render(width, height, st, at)
-        # if self.context.debug:
-        #     debug_text = "Vel "+ str(self.velocity)+"\nCombo "+str(self.player_combo)
-        #     self.debug_label.update_text(debug_text)
-        #     self.debug_label.render()
+        if self.context.debug:
+            vel_str = f"({self.velocity.x:.3f}, {self.velocity.y:.3f})"
+            debug_text = f"Vel {vel_str}\nCombo {self.player_combo}"
+            self.debug_label.update_text(debug_text)
+            self.debug_label.execute_render()
         return result
 
     def update_sprite(self):

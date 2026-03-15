@@ -40,10 +40,13 @@ init -1 python:
             # Initialize game-wide effects
             self.effect_controller = EffectController(self)
 
-            self.current_panel = None
-
             # Initialize last frame time
             self.last_st = 0.0
+
+            self.current_panel = None
+
+            # DEBUG
+            self.game.debug = False
 
 
         def is_paused(self):

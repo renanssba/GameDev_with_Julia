@@ -1,4 +1,5 @@
-define julia = Character("Julia", color="#C161D4")
+define julia = Character(image=None, color="#C161D4")
+define bg_julia = "vn_images/ep2 fri_game_julia_likeit2.png"
 
 init -2 python:
     from constants import GameConstants
@@ -24,11 +25,13 @@ screen ball_minigame(controller):
         # text "Vector" xalign 0.5 yalign 0.5 size 40 color "#fff"
 
 label start:
-    scene bg room
-    show julia happy
+    define config.language = "english"
+    # desativa a tradução automática (força inglês)
+
+    scene bg bg_julia
+    # show julia happy
 
     jump minigame
-
     julia "Hey, let's play a game!"
     menu:
         julia "What do you want to do?"
@@ -55,5 +58,5 @@ label minigame:
     # jump start
 
 label end:
-    julia "See you later!"
+    # julia "See you later!"
     return

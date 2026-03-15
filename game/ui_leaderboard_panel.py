@@ -7,6 +7,7 @@ from sound_manager import SfxType
 from game_context import LayerName
 from ui_panel import UiPanel
 from ui_object import UiOption, UiLabel, UiOverlay, UiBar
+import renpy
 
 class LeaderboardEntry:
     def __init__(self, name, score):
@@ -25,10 +26,11 @@ class UiLeaderboardPanel(UiPanel):
         self.title.body.y = 10
 
         # load entries from file
-        self.entries = []
         self.load_entries()
 
-        # self.generate_random_entries() # used for Debug
+        # DEBUG: generate random entries
+        # self.generate_random_entries(2) # used for Debug
+        # self.save_entries()
 
         self.player_input = ""
         self.inputing_name = False
@@ -36,10 +38,13 @@ class UiLeaderboardPanel(UiPanel):
 
         self.update_all_labels()
         self.overlay = UiOverlay(context, LayerName.UI.value, GameConstants.COLOR_GAME_SPACE.value)
+        
+        self.debug_label = UiLabel(0-self.context.screen.x, self.context.screen.height, "F11 - Reset Leaderboard", self.context.ui_font, self.context)
 
-    def generate_random_entries(self):
+
+    def generate_random_entries(self, num):
         # generate some random entries
-        for i in range(5):
+        for i in range(num):
             self.add_entry(f"Player {i+random.randint(1, 1000)}", random.randint(0, 1000))
 
 
@@ -59,25 +64,25 @@ class UiLeaderboardPanel(UiPanel):
             # newLabel.align_body_left()
             self.labels.append(newLabel)
         
-        # first label uses highlighted color
-        # self.labels[0].update_text_color(GameConstants.COLOR_UI_SELECTED.value)
 
-
-    def render(self):
+    def execute_render(self):
         if self.inputing_name: # hide "Back" option when inputing name
             hidden_options = self.options
             self.options = []
-            super().render()
+            super().execute_render()
             self.options = hidden_options
         else:
-            super().render()
+            super().execute_render()
 
         for i, label in enumerate(self.labels):
             if i == self.inputing_name_position and self.inputing_name:
                 label.update_text_color(self.get_current_selected_color())
             else:
                 label.update_text_color(GameConstants.COLOR_UI_BASIC.value)
-            label.render()
+            label.execute_render()
+        
+        if self.context.debug:
+            self.debug_label.execute_render()
 
 
     def confirm_input(self):
@@ -101,6 +106,9 @@ class UiLeaderboardPanel(UiPanel):
 
 
     def process_panel_specific_inputs(self, event):
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_F11 and self.context.debug:
+            self.reset_entries()
+
         if not self.inputing_name:
             return
         if event.type == pygame.KEYDOWN:
@@ -162,31 +170,27 @@ class UiLeaderboardPanel(UiPanel):
 
     ### SAVE AND LOAD ###
     def save_entries(self):
-        # save the entries to a file as a json array
+        # salva no persistent do Ren'Py (persistente entre sessões)
         data = [{"name": e.name, "score": e.score} for e in self.entries]
-        with open(GameConstants.LEADERBOARD_FILE.value, "w", encoding="utf-8") as file:
-            json.dump(data, file)
+        renpy.game.persistent.leaderboard = data
+        renpy.exports.save_persistent()
 
     def load_entries(self):
-        # if the file does not exist, just return
-        if not os.path.exists(GameConstants.LEADERBOARD_FILE.value):
-            return
-
-        # load the entries from a file and convert to LeaderboardEntry objects
-        try:
-            with open(GameConstants.LEADERBOARD_FILE.value, "r", encoding="utf-8") as file:
-                raw = file.read().strip()
-                if not raw:
-                    # empty file, ignore
-                    return
-                data = json.loads(raw)
-        except (json.JSONDecodeError, OSError, ValueError):
-            # malformed or unreadable file, ignore and start fresh
-            return
-
         self.entries = []
+
+        # usa o persistent real do jogo (renpy.game.persistent), não o módulo
+        if not hasattr(renpy.game.persistent, "leaderboard") or renpy.game.persistent.leaderboard is None or len(renpy.game.persistent.leaderboard) == 0:
+            return
+
+        data = renpy.game.persistent.leaderboard
+        print(f"Leaderboard data loaded: {data}")
         for item in data:
-            # be defensive in case of malformed data
             name = item.get("name", "Player")
             score = item.get("score", 0)
+            print(f"Leaderboard entry: {name} - {score}")
             self.entries.append(LeaderboardEntry(name, score))
+
+    def reset_entries(self):
+        self.entries = []
+        self.save_entries()
+        self.update_all_labels()

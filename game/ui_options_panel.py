@@ -1,11 +1,11 @@
 import pygame
-import json
-import os
 from constants import GameConstants
 from sound_manager import SfxType
 from game_context import LayerName
 from ui_panel import UiPanel
 from ui_object import UiOption, UiLabel, UiOverlay, UiBar
+import renpy
+
 
 class OptionsContainer:
     def __init__(self, text, function):
@@ -26,15 +26,12 @@ class UiOptionsPanel(UiPanel):
         self.title.body.y -= 10
 
         # initialize values, load from file if exists
-        self.option_values = [7, 7, 7, self.context.is_fullscreen(), '']
-        self.load_options()
-
-        # self.option_values = [7, 7, 7, 1, self.context.is_fullscreen(), '']
+        self.option_values = [7, 7, 7, self.is_fullscreen(), '']
         self.option_values_labels = []
+        self.load_options()
         for i, option in enumerate(self.options):
             option.ui_label.align_body_left()
             option.ui_label.body.x -= 30
-            # option.ui_label.body.y -= 54
 
             if i < 3:
                 new_bar = UiBar(self.context, "bar_", pygame.Rect(option.ui_label.body.x, option.ui_label.body.y, 100, 16))
@@ -53,11 +50,19 @@ class UiOptionsPanel(UiPanel):
 
         self.overlay = UiOverlay(context, LayerName.UI.value, GameConstants.COLOR_GAME_SPACE.value)
 
+    # def show_panel(self):
+    #     super().show_panel()
+    #     # load values from preferences
+    #     self.option_values[1] = self.sound_volume
+    #     self.option_values[2] = self.music_volume
+    #     print("SHOW PANEL: sound_volume:", self.sound_volume, "music_volume:", self.music_volume)
+    #     self.update_volume_values()
+    #     self.update_labels()
 
-    def render(self):
-        super().render()
+    def execute_render(self):
+        super().execute_render()
         for i, option_value_label in enumerate(self.option_values_labels):
-            option_value_label.render()
+            option_value_label.execute_render()
 
     def process_panel_specific_inputs(self, event):
         if event.type == pygame.KEYDOWN:
@@ -105,10 +110,13 @@ class UiOptionsPanel(UiPanel):
         if self.option_values[3] == 0:
             self.option_values[3] = 3
         self.update_labels()
+
+    def is_fullscreen(self):
+        return renpy.game.preferences.fullscreen
     
     def toggle_fullscreen(self):
-        self.context.toggle_fullscreen()
-        self.option_values[3] = self.context.is_fullscreen()
+        renpy.game.preferences.fullscreen = not renpy.game.preferences.fullscreen
+        self.option_values[3] = self.is_fullscreen()
         self.update_labels()
 
     def update_labels(self):
@@ -134,14 +142,14 @@ class UiOptionsPanel(UiPanel):
             "music_volume": self.option_values[2],
             "fullscreen": self.option_values[3],
         }
-        with open(GameConstants.OPTIONS_FILE.value, "w", encoding="utf-8") as file:
-            json.dump(data, file)
+        renpy.game.persistent.options = data
+        renpy.exports.save_persistent()
 
     def load_options(self):
-        if not os.path.exists(GameConstants.OPTIONS_FILE.value):
+        if not hasattr(renpy.game.persistent, "options") or renpy.game.persistent.options is None or len(renpy.game.persistent.options) == 0:
             return
-        with open(GameConstants.OPTIONS_FILE.value, "r", encoding="utf-8") as file:
-            data = json.load(file)
+        data = renpy.game.persistent.options
+
         self.option_values[0] = data["master_volume"]
         self.option_values[1] = data["sfx_volume"]
         self.option_values[2] = data["music_volume"]
@@ -149,5 +157,5 @@ class UiOptionsPanel(UiPanel):
 
         # apply loaded values to the context
         self.context.sound_manager.set_volumes(self.option_values[0], self.option_values[1], self.option_values[2])
-        if self.context.is_fullscreen() != data["fullscreen"]:
-            self.context.toggle_fullscreen()
+        if self.is_fullscreen() != bool(data["fullscreen"]):
+            self.toggle_fullscreen()

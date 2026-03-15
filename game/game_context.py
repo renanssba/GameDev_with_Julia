@@ -72,9 +72,6 @@ class GameContext:
         self._ui_layer = None
 
         # Initialize fonts // TODO: Use Ren'Py fonts
-        # self.ui_font_bold = pygame.font.Font(GameConstants.UI_FONT_BOLD.value, 20)
-        # self.ui_font = pygame.font.Font(GameConstants.UI_FONT.value, 20)
-        # self.score_font = pygame.font.Font(GameConstants.UI_SCORE_FONT.value, 8)
         self.ui_font_bold = None
         self.ui_font = None
         self.score_font = None
@@ -92,24 +89,6 @@ class GameContext:
         # Game Controller
         self.game_controller = None
 
-
-    def is_fullscreen(self): # TODO: Use Ren'Py fullscreen
-        # surface = pygame.display.get_surface()
-        # if surface is None:
-        #     return False
-        # flags = surface.get_flags()
-        # return bool(flags & pygame.FULLSCREEN)
-        return False
-
-    def toggle_fullscreen(self): # TODO: Use Ren'Py fullscreen
-        # if self.is_fullscreen():
-        #     # Go back to windowed mode
-        #     self._screen = pygame.display.set_mode((self._base_width, self._base_height), pygame.SCALED)
-        # else:
-        #     # Switch to fullscreen using the base resolution
-        #     self._screen = pygame.display.set_mode((self._base_width, self._base_height), pygame.FULLSCREEN | pygame.SCALED)
-        # TODO: Use Ren'Py fullscreen
-        pass
 
     def get_layer(self, layer_name=LayerName.FOREGROUND):
         name = layer_name.value if isinstance(layer_name, LayerName) else layer_name

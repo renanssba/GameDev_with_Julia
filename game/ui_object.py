@@ -1,4 +1,4 @@
-import pygame
+
 import re
 from enum import Enum
 from constants import GameConstants
@@ -6,6 +6,7 @@ from game_context import GameContext, GameState, LayerName
 from game_object import GameObject
 from utils import color_to_hex
 import renpy
+from frect import FRect
 from renpy.display.render import render as renpy_render
 
 
@@ -46,12 +47,9 @@ class UiLabel(UiObject):
         self.num_frames = 1
         self.framerate = 1
 
-        print("UiLabel constructor called!")
-
         # Displayable de texto no estilo Ren'Py
         Text = renpy.store.Text
         self._text_displayable = Text(self.text, size = self.text_size, color = color_to_hex(self.color),)
-        print("Text displayable created successfully!")
 
         self.img = self._text_displayable
         w = self.context.w or GameConstants.WIDTH.value
@@ -60,7 +58,6 @@ class UiLabel(UiObject):
         self.frame_width = size_render.width
         self.spritesheet_height = size_render.height
         self.update_body_from_image(x, y)
-        print("Body updated successfully!")
 
     def update_text(self, text):
         self.text = text
@@ -91,8 +88,9 @@ class UiOverlay(UiObject):
         super().__init__(0, 0, "", context)
         self.layer_name = layer_name
         self._color = color
-        self.body.width = context.screen.width
-        self.body.height = context.screen.height
+        self.body.width = GameConstants.WIDTH.value
+        self.body.height = GameConstants.HEIGHT.value
+        self.body.x = -context.screen.x
 
     def render(self, width, height, st, at):
         from renpy.display.render import Render
@@ -121,10 +119,16 @@ class UiBar(UiObject):
     def current_frame_number(self):
         return 1
 
-    def render(self):
-        super().render()
-        width = int(self.value / (self.max_value - self.min_value) * self.body.width-2)
-        fill_rect = pygame.FRect(self.body.x + self.context.screen.x+1, self.body.y + self.context.screen.y, width, self.body.height)
+    def execute_render(self):
+        my_render = super().execute_render()
+        
+        fill_width = int(self.value / (self.max_value - self.min_value) * self.body.width-2)
         fill_frame = self.get_frame(0)
-        self.blit_3_slice(fill_frame, fill_rect)
 
+        original_width = self.body.width
+        self.body.width = fill_width
+        self.body.x += 1
+
+        my_render = self.framed_render(fill_frame, my_render)
+        self.body.width = original_width
+        self.body.x -= 1

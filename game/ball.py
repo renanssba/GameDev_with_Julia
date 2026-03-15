@@ -51,7 +51,6 @@ class Ball(GameObject):
         self.particle_generator = None
 
         self.debug_label = UiLabel(0-self.context.screen.x, self.context.screen.height, "-\n-", self.context.ui_font, self.context)
-        print("the ball label was created successfully!")
         self.debug_label.align_body_top()
         self.debug_label.align_body_top()
 

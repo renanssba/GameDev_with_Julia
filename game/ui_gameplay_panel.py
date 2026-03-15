@@ -1,7 +1,7 @@
 import pygame
 from ui_panel import UiPanel
-from game_context import GameState
-from ui_object import UiObject, UiLabel
+from game_context import GameState, LayerName
+from ui_object import UiObject, UiLabel, UiOverlay
 from constants import GameConstants
 from sound_manager import SfxType
 
@@ -18,12 +18,25 @@ class UiGameplayPanel(UiPanel):
         for i in range(GameConstants.MAX_LIVES.value):
             self.lives_icons.append(UiObject(-context.screen.x + i * 20 + dx, 2, "heart", context))
 
+        # Background
+        self.bg = UiOverlay(context, LayerName.UI, GameConstants.COLOR_GAME_SPACE.value)
+        self.bg.layer_name = LayerName.BACKGROUND
+
         # Debug Label
         self.debug_ui = UiLabel(context.screen.x+context.screen.width, 4, "Debug", context.ui_font, context)
-        self.debug_ui.render_condition = (lambda: context.debug)
+        # self.debug_ui.render_condition = (lambda: context.debug)
         self.debug_ui.align_body_left()
         self.debug_ui.align_body_left()
-        context.game_objects.append(self.debug_ui)
+        
+        # FPS Label (atualizado a cada 0.5s)
+        self.debug_fps_label = UiLabel(context.screen.x+context.screen.width, context.screen.height, "FPS: 00", context.ui_font, context)
+        self._fps_update_accum = 0.0
+        self._fps_update_interval = 0.5
+        # self.debug_fps_label.render_condition = (lambda: context.debug)
+        self.debug_fps_label.align_body_left()
+        self.debug_fps_label.align_body_left()
+        self.debug_fps_label.align_body_top()
+        self.debug_fps_label.align_body_top()
 
         # other objects
         self.powerup_spawner = None
@@ -37,9 +50,18 @@ class UiGameplayPanel(UiPanel):
         self.context.sound_manager.play_music(SfxType.GAMEPLAY_MUSIC)
 
     def execute_render(self):
+        self.bg.execute_render()
         for i in range(self.context.lives):
             self.lives_icons[i].execute_render()
         self.score_label.execute_render()
+        if self.context.debug:
+            self.debug_ui.execute_render()
+            self._fps_update_accum += self.context.delta_time
+            if self._fps_update_accum >= self._fps_update_interval:
+                self._fps_update_accum = 0.0
+                fps = 1.0 / self.context.delta_time if self.context.delta_time > 0 else 0
+                self.debug_fps_label.update_text(f"FPS: {fps:.1f}")
+            self.debug_fps_label.execute_render()
 
     def update_ui(self):
         self.score_label.update_text(str(self.context.score))

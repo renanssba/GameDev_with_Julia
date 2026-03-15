@@ -22,9 +22,6 @@ class GameObject(Displayable):
         Displayable.__init__(self)
         self.context = context
 
-        # print("--------------------------------")
-        # print(f"GameObject init: {img_name}")
-
         # Timed effects like VFX and gameplay status effects
         self.effect_controller = EffectController(self)
 
@@ -143,6 +140,8 @@ class GameObject(Displayable):
         my_layer = self.context.get_layer(self.layer_name)
         if my_layer is not None:
             my_layer.blit(my_render, (renderX, renderY))
+        return my_render
+        
     
     def render(self, width, height, st, at):
         if hasattr(self, 'render_condition') and self.render_condition is not None:
@@ -171,7 +170,7 @@ class GameObject(Displayable):
     def simple_render(self, frame, my_render=None):
         obj_render = renpy_render(frame, self.context.w, self.context.h, self.context.st, self.context.at)
         if my_render is None:
-            my_render = Render(obj_render.width, obj_render.height)
+            my_render = Render(self.body.width, self.body.height)
         my_render.blit(obj_render, (0, 0))
         return my_render
 

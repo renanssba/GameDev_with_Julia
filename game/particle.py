@@ -4,7 +4,7 @@ from game_context import LayerName
 from game_object import GameObject
 from vector2 import Vector2
 from constants import GameConstants
-# from ui_object import UiLabel
+from ui_object import UiLabel
 
 class ParticleType(Enum):
     FIRE = "part_fire_"
@@ -43,9 +43,8 @@ class TextParticle(Particle):
         self.layer_name = LayerName.EFFECTS_FRONT
         
         # TODO: Implement text particle
-        # self.label = UiLabel(0, 0, text, self.font, context, self.color)
-        # self.img = self.label.get_white_text_surface(text)
-        self.img = None
+        self.label = UiLabel(0, 0, text, self.font, context, self.color)
+        self.img = self.label.img
         self.frame_width = self.spritesheet_width
         self.num_frames = 1
         self.update_body_from_image(x, y)

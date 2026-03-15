@@ -36,6 +36,7 @@ class UiPanel(UiObject):
         else:
             self.title = None
         
+        self.bg = None
         self.overlay = UiOverlay(context, self.layer_name, (0, 0, 0, 128))
 
 

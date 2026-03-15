@@ -55,7 +55,7 @@ init -1 python:
             self.defeat_panel.show_panel = (lambda: self.game.sound_manager.stop_music())
 
             # DEBUG PRINT ALL FILES
-            self.print_list_files()
+            # self.print_list_files()
 
             # Initialize last frame time
             self.last_st = 0.0
@@ -84,20 +84,21 @@ init -1 python:
             self.game.st = st
             self.game.at = at
             self.game.delta_time = float(st) - float(self.last_st)
-            # print("st: ", st, " last_st: ", self.last_st, " delta_time: ", self.game.delta_time)
             self.last_st = st
 
             self.game._unscaled_frame += 1
-
-            self.game.delta_time = self.game._clock.tick(60) / 1000
-            self.game.delta_time = max(0.01, min(0.1, self.game.delta_time))
 
             if self.effect_controller.has_effect(EffectType.HITSTOP):
                 intensity = self.effect_controller.get_effect(EffectType.HITSTOP).intensity
                 renpy.redraw(self, intensity / 60.0)
                 return
             
-            renpy.redraw(self, 0)
+            # cap FPS at 60
+            min_delta_time = 1.0 / 60.0 # cap FPS at 60
+            if self.game.delta_time < min_delta_time:
+                renpy.redraw(self, min_delta_time - self.game.delta_time)
+            else:
+                renpy.redraw(self, 0)
 
             if not self.is_running():
                 return
@@ -297,22 +298,18 @@ init -1 python:
 
 
         ### OPTIONS ACTIONS ###
-        def toggle_fullscreen(self):
-            """Alterna o modo fullscreen da janela usando o display atual (SCALED)."""
-            pygame.display.toggle_fullscreen()
-
-        def toggle_resolution(self):
-            """
-            Alterna a escala da janela entre 1x, 2x e 3x da resolução base,
-            mantendo o game space centralizado.
-            """
-            current_scale = round(self.game.current_screen_scale())
-            if current_scale <= 1:
-                new_scale = 2
-            elif current_scale == 2:
-                new_scale = 3
-            else:
-                new_scale = 1
+        # def toggle_resolution(self): # DEPRECATED
+        #     """
+        #     Alterna a escala da janela entre 1x, 2x e 3x da resolução base,
+        #     mantendo o game space centralizado.
+        #     """
+        #     current_scale = round(self.game.current_screen_scale())
+        #     if current_scale <= 1:
+        #         new_scale = 2
+        #     elif current_scale == 2:
+        #         new_scale = 3
+        #     else:
+        #         new_scale = 1
 
 
 

@@ -1,0 +1,66 @@
+
+============================================================
+Preferences - ATTRIBUTES AND METHODS
+============================================================
+Preferences.afm_after_click : bool
+Preferences.afm_enable : bool
+Preferences.afm_time : int
+Preferences.after_setstate : NoneType
+Preferences.after_upgrade : method
+Preferences.audio_when_minimized : bool
+Preferences.audio_when_unfocused : bool
+Preferences.check : method
+Preferences.desktop_rollback_side : str
+Preferences.emphasize_audio : bool
+Preferences.font_kerning : float
+Preferences.font_line_spacing : float
+Preferences.font_size : float
+Preferences.font_transform : NoneType
+Preferences.fullscreen : bool
+Preferences.get_all_mixers : method
+Preferences.get_mixer : method
+Preferences.get_mute : method
+Preferences.get_volume : method
+Preferences.gl_framerate : NoneType
+Preferences.gl_npot : bool
+Preferences.gl_powersave : bool
+Preferences.gl_tearing : bool
+Preferences.high_contrast : bool
+Preferences.init : method
+Preferences.init_mixers : method
+Preferences.joymap : dict
+Preferences.language : str
+Preferences.maximized : bool
+Preferences.mobile_rollback_side : str
+Preferences.mono_audio : bool
+Preferences.mouse_move : bool
+Preferences.mute : dict
+Preferences.nosave : list
+Preferences.pad_enabled : bool
+Preferences.performance_test : bool
+Preferences.physical_size : tuple
+Preferences.renderer : str
+Preferences.reset : method
+Preferences.restore_window_position : bool
+Preferences.self_voicing : bool
+Preferences.self_voicing_volume_drop : float
+Preferences.set_mixer : method
+Preferences.set_mute : method
+Preferences.set_volume : method
+Preferences.show_empty_window : bool
+Preferences.skip_after_choices : bool
+Preferences.skip_unseen : bool
+Preferences.system_cursor : bool
+Preferences.text_cps : int
+Preferences.transitions : int
+Preferences.using_afm_enable : bool
+Preferences.video_image_fallback : bool
+Preferences.virtual_size : tuple
+Preferences.voice_after_game_menu : bool
+Preferences.voice_sustain : bool
+Preferences.volumes : dict
+Preferences.wait_voice : bool
+Preferences.web_cache_preload : bool
+Preferences.window_position : tuple
+Preferences.window_position_layout : tuple
+============================================================

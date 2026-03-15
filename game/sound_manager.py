@@ -40,8 +40,6 @@ class SfxType(Enum):
 
 class SoundManager:
     def __init__(self):
-        # pygame.mixer.init()
-        self._sfx_cache = {}
         self.current_music = None  # current base name (without _intro/_loop)
         self._music_state = None   # None, "intro" or "loop"
 
@@ -49,32 +47,15 @@ class SoundManager:
         self.master_volume = 0.7
         self.sfx_volume = 0.7
         self.music_volume = 0.7
-        # TODO: Use Ren'Py music
-        # pygame.mixer.music.set_volume(self.master_volume * self.music_volume)
 
     def play_sfx(self, sfx_type: SfxType):
-        """Plays an SFX by enum value, scaled by effective sfx volume."""
+        """Plays an SFX by enum value."""
         name = sfx_type.value
         sfx_path = "sfx/"+name+".ogg"
         if renpy.loader.loadable(sfx_path):
             return renpy.audio.sound.play(sfx_path, channel="audio")
-
-
-        # if name not in self._sfx_cache:
-        #     loaded_sfx = self.load_sfx(name)
-        #     if loaded_sfx is not None:
-        #         self._sfx_cache[name] = loaded_sfx
-        #     else:
-        #         return
-        # snd = self._sfx_cache[name]
-        # snd.set_volume(self.effective_sfx_volume())
-        # snd.play()
-
-    def load_sfx(self, name: str):
-        sfx_path = "sfx/"+name+".ogg"
-        if renpy.loader.loadable(sfx_path):
-            return renpy.audio.sound.play(sfx_path)
         else:
+            print("SFX not found:", name)
             return None
 
     def _get_music_base(self, sfx_type: SfxType) -> str:
@@ -87,13 +68,11 @@ class SoundManager:
         return base
 
     def play_music(self, sfx_type: SfxType):
-        # return # TODO: Use Ren'Py music
         """
         Plays music in two parts: intro (1x) + loop (∞).
         If the intro file does not exist, only the loop is played in loop infinity.
         """
         base = self._get_music_base(sfx_type)
-        print("SOUND MANAGER playing music: ", base)
 
         # already playing this music
         if self.current_music == base and self._music_state in ("intro", "loop"):
@@ -102,16 +81,11 @@ class SoundManager:
         intro_path = f"songs/{base}_intro.mp3"
         loop_path = f"songs/{base}_loop.mp3"
 
-        print("intro_path: ", intro_path, "loop_path: ", loop_path)
-
         if renpy.loader.loadable(intro_path):
-            print("playing intro")
             renpy.audio.music.play(intro_path, loop=False)
             self.current_music = base
             self._music_state = "intro"
-            print("music is looping: ", renpy.audio.music.get_loop())
         elif renpy.loader.loadable(loop_path):
-            print("playing loop")
             renpy.audio.music.play(loop_path, loop=True)
             self.current_music = base
             self._music_state = "loop"
@@ -120,8 +94,6 @@ class SoundManager:
             self.current_music = None
             self._music_state = None
         
-        print("SOUND MANAGER music state: ", self._music_state)
-
     def update(self):
         """Updates the music state: when the intro ends, starts the loop infinitely."""
         if self._music_state != "intro":
@@ -150,21 +122,14 @@ class SoundManager:
         - sfx: relative volume of sound effects
         - music: relative volume of music
         """
-        # master_steps = max(0, min(master_steps, 10))
-        # sfx_steps = max(0, min(sfx_steps, 10))
-        # music_steps = max(0, min(music_steps, 10))
-
         # Normalize to 0.0 – 1.0
         self.master_volume = master_steps / 10.0
         self.sfx_volume = sfx_steps / 10.0
         self.music_volume = music_steps / 10.0
 
-        # Apply to all already loaded sounds
-        for snd in self._sfx_cache.values():
-            snd.set_volume(self.effective_sfx_volume())
-
         # Apply to current music (if any)
         renpy.audio.music.set_volume(self.effective_music_volume(), channel="music")
+        renpy.audio.sound.set_volume(self.effective_sfx_volume(), channel="audio")
 
     def effective_sfx_volume(self):
         return self.master_volume * self.sfx_volume

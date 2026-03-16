@@ -22,15 +22,17 @@ class LayerName(Enum):
 
 
 class GameContext:
-    def __init__(self, width, height, game_space_width, game_space_height, start_stage, last_stage):
+    def __init__(self, width, height, game_space_width, game_space_height, story_part):
         # Guardar resolução base para permitir trocar escala depois
         self._base_width = width
         self._base_height = height
         
         # Current Stage
-        self.start_stage = start_stage
-        self.last_stage = last_stage
+        self.load_config(story_part)
         self.current_stage = self.start_stage
+
+        # DEBUG: force current stage to fixed value
+        self.current_stage = 1
 
         # Game space é a área onde os objetos são renderizados
         # x e y são a posição da "câmera"
@@ -89,6 +91,30 @@ class GameContext:
 
         # Game Controller
         self.game_controller = None
+
+    def load_config(self, story_part):
+        self.advanced_features = True
+        self.arcade_mode = False
+        self.reskin = 0 # 0 = original, 1 = reskin
+
+        if story_part == -1:
+            # this is the arcade mode
+            self.start_stage = 1
+            self.last_stage = 3
+            self.arcade_mode = True
+        elif story_part == 1:
+            # only story part 1 does not have advanced features
+            self.advanced_features = False
+            self.start_stage = 1
+            self.last_stage = 1
+        elif story_part == 2:
+            self.start_stage = 2
+            self.last_stage = 2
+        elif story_part == 3:
+            # apply reskin in julia's scene
+            self.reskin = 1
+            self.start_stage = 3
+            self.last_stage = 3
 
 
     def get_layer(self, layer_name=LayerName.FOREGROUND):

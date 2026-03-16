@@ -298,39 +298,33 @@ screen navigation():
         spacing gui.navigation_spacing
 
         if main_menu:
-
-            textbutton _("Início") action Start()
-
+            textbutton _("Modo História") action Start()
+            textbutton _("Modo Arcade") action Start("arcade_mode")
         else:
-
-            textbutton _("Histórico") action ShowMenu("history")
-
-            textbutton _("Salvar") action ShowMenu("save")
-
-        textbutton _("Carga") action ShowMenu("load")
-
-        textbutton _("Preferências") action ShowMenu("preferences")
+            textbutton _("History") action ShowMenu("history")
+            textbutton _("Save") action ShowMenu("save")
+        # textbutton _("Continuar") action ShowMenu("load")
+        textbutton _("Opções") action ShowMenu("preferences")
 
         if _in_replay:
 
-            textbutton _("Fim da reprodução") action EndReplay(confirm=True)
+            textbutton _("Parar Replay") action EndReplay(confirm=True)
 
         elif not main_menu:
 
-            textbutton _("Menu principal") action MainMenu()
+            textbutton _("Menu Principal") action MainMenu()
 
         textbutton _("Sobre") action ShowMenu("about")
 
-        if renpy.variant("pc") or (renpy.variant("web") and not renpy.variant("mobile")):
-
-            ## A ajuda não é necessária ou relevante para dispositivos móveis.
-            textbutton _("Ajuda") action ShowMenu("help")
+        # if renpy.variant("pc") or (renpy.variant("web") and not renpy.variant("mobile")):
+        #     ## A ajuda não é necessária ou relevante para dispositivos móveis.
+            # textbutton _("Ajuda") action ShowMenu("help")
 
         if renpy.variant("pc"):
 
             ## O botão Sair é proibido no iOS e desnecessário no Android e na
             ## Web.
-            textbutton _("Sair") action Quit(confirm=not main_menu)
+            textbutton _("Fechar") action Quit(confirm=not main_menu)
 
 
 style navigation_button is gui_button
@@ -528,8 +522,9 @@ screen about():
 
         vbox:
 
-            label "[config.name!t]"
-            text _("Versão [config.version!t]\n")
+            label "[config.name!t]\n"
+            text _("Criado por Renan Rodrigues como teste para a vaga de Desenvolvedor Python na OppaiMan.\n")
+            # text _("Versão [config.version!t]\n")
 
             ## gui.about é normalmente definido em options.rpy.
             if gui.about:
@@ -765,14 +760,14 @@ screen preferences():
                                 textbutton _("Teste") action Play("sound", config.sample_sound)
 
 
-                    if config.has_voice:
-                        label _("Volume da voz")
+                    # if config.has_voice:
+                    #     label _("Volume da voz")
 
-                        hbox:
-                            bar value Preference("voice volume")
+                    #     hbox:
+                    #         bar value Preference("voice volume")
 
-                            if config.sample_voice:
-                                textbutton _("Teste") action Play("voice", config.sample_voice)
+                    #         if config.sample_voice:
+                    #             textbutton _("Teste") action Play("voice", config.sample_voice)
 
                     if config.has_music or config.has_sound or config.has_voice:
                         null height gui.pref_spacing

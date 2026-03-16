@@ -23,15 +23,14 @@ init -1 python:
     from renpy.display.layout import Transform
 
     class GameController(renpy.Displayable):
-        def __init__(self, start_stage, last_stage):
+        def __init__(self, story_part):
             super(GameController, self).__init__()
             self.game = GameContext(
                 GameConstants.WIDTH.value,
                 GameConstants.HEIGHT.value,
                 GameConstants.BRICK_WIDTH.value * GameConstants.BRICK_COLUMNS.value,
                 GameConstants.HEIGHT.value,
-                start_stage,
-                last_stage,
+                story_part
             )
             self.game.game_controller = self
             
@@ -77,12 +76,10 @@ init -1 python:
 
             # DEBUG
             # self.game.debug = True
-            if(self.game.debug):
-                # self.open_panel(self.transition_panel)
+            if not self.game.arcade_mode:
                 self.open_panel(self.gameplay_panel)
             else:
                 self.open_panel(self.title_ui)
-            # self.open_panel(self.gameplay_panel)
 
 
         def is_paused(self):
@@ -218,11 +215,13 @@ init -1 python:
                     self.open_panel(self.leaderboard_panel)
                 case GameState.VICTORY:
                     self.close_all_panels()
-                    self.open_panel(self.title_ui)
+                    if self.game.arcade_mode:
+                        self.open_panel(self.title_ui)
                     self.open_panel(self.victory_panel)
                 case GameState.DEFEAT:
                     self.close_all_panels()
-                    self.open_panel(self.title_ui)
+                    if self.game.arcade_mode:
+                        self.open_panel(self.title_ui)
                     self.open_panel(self.defeat_panel)
                 case GameState.TRANSITION:
                     self.close_all_panels()
@@ -281,6 +280,7 @@ init -1 python:
                 self.advance_stage()
 
         def advance_stage(self):
+            print("ADVANCING STAGE. current stage: ", self.game.current_stage, "last stage: ", self.game.last_stage)
             self.game.game_objects = []
             self.game.current_stage += 1
             if self.game.current_stage > self.game.last_stage:
@@ -302,17 +302,19 @@ init -1 python:
         ### TIMED EFFECTS ###
         def apply_effect(self, effect_type):
             match effect_type:
-                case EffectType.SLOW_BALLS:
+                case EffectType.SLOW_BALL:
                     self.game.time_scale *= GameConstants.SLOW_FACTOR.value
-                case EffectType.HASTE_BALLS:
+                case EffectType.HASTE_BALL:
                     self.game.time_scale *= GameConstants.HASTE_FACTOR.value
 
         def remove_effect(self, effect_type):
             match effect_type:
-                case EffectType.SLOW_BALLS:
+                case EffectType.SLOW_BALL:
                     self.game.time_scale /= GameConstants.SLOW_FACTOR.value
-                case EffectType.HASTE_BALLS:
+                case EffectType.HASTE_BALL:
                     self.game.time_scale /= GameConstants.HASTE_FACTOR.value
+                case EffectType.ACTIVATE_RESKIN_ON_END:
+                    self.gameplay_panel.toggle_reskin()
 
 
         def any_of_this_type(self, type):

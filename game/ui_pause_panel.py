@@ -10,7 +10,7 @@ class UiPausePanel(UiPanel):
     def __init__(self, context):
         options_list = [
             UiOption("Resume", self.continue_game, context),
-            UiOption("Restart", self.restart_game, context),
+            # UiOption("Restart", self.restart_game, context),
             UiOption("Options", self.show_options, context),
             UiOption("Quit", self.quit_game, context),
         ]
@@ -46,4 +46,7 @@ class UiPausePanel(UiPanel):
         self.context.game_controller.set_game_state(GameState.OPTIONS)
         
     def quit_game(self):
-        self.context.game_controller.set_game_state(GameState.TITLE)
+        if self.context.arcade_mode:
+            self.context.game_controller.set_game_state(GameState.TITLE)
+        else:
+            self.context.game_controller.close_all_panels()

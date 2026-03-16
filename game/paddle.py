@@ -26,9 +26,10 @@ class Paddle(GameObject):
         self.framerate = 20
 
         # Extra sprites
-        self.img_default = self.img
-        self.img_sticky = self.load_spritesheet("paddle_sticky_")
-        self.img_shooter = self.load_spritesheet("paddle_shooter_")
+        # self.img_default = self.img
+        # self.img_sticky = self.load_spritesheet("paddle_sticky_")
+        # self.img_shooter = self.load_spritesheet("paddle_shooter_")
+        self.num_frames = 2
         
         # Jumping physics
         self.max_y = y
@@ -46,22 +47,20 @@ class Paddle(GameObject):
 
 
     ### RENDERING ###
-    def update_sprite(self):
+    def current_frame_number(self):
+        f_number = super().current_frame_number()
         if self.effect_controller.has_effect(EffectType.SHOOTING_PADDLE):
-            self.img = self.img_shooter
+            f_number += 4
         elif self.effect_controller.has_effect(EffectType.STICKY_PADDLE):
-            self.img = self.img_sticky
-        else:
-            self.img = self.img_default
+            f_number += 2
+        return f_number
 
 
     def apply_effect(self, effect_type: EffectType):
         super().apply_effect(effect_type)
-        self.update_sprite()
 
     def remove_effect(self, effect_type: EffectType):
         super().remove_effect(effect_type)
-        self.update_sprite()
 
 
     ### PHYSICS ###
@@ -148,7 +147,7 @@ class Paddle(GameObject):
         if self.has_ball():
             self.launch_ball()
         
-        if self.touching_ground():
+        if self.touching_ground() and self.context.advanced_features:
             self.jump()
     
     def launch_ball(self):

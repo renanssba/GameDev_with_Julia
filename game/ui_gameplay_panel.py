@@ -17,16 +17,11 @@ class UiGameplayPanel(UiPanel):
         self.lives_icons = []
         for i in range(GameConstants.MAX_LIVES.value):
             self.lives_icons.append(UiObject(-context.screen.x + i * 20 + dx, 2, "heart", context))
+            self.objects_to_reskin.append(self.lives_icons[i])
 
         # Background
         # self.bg = UiOverlay(context, LayerName.UI, GameConstants.COLOR_GAME_SPACE.value)
         # self.bg.layer_name = LayerName.BACKGROUND
-
-        # Border
-        self.bg = UiObject(0, 0, "gameplay_border", self.context)
-        self.bg.body.width = context.screen.width
-        self.bg.body.height = context.screen.height
-        self.bg.layer_name = LayerName.BACKGROUND
 
         # Effect Duration bars
         self.effect_bars = []
@@ -60,15 +55,20 @@ class UiGameplayPanel(UiPanel):
         # reset effect bars
         self.effect_bars = []
 
+        # Border
+        bg = UiObject(0, 0, "gameplay_border", self.context)
+        bg.body.width = self.context.screen.width
+        bg.body.height = self.context.screen.height
+        bg.layer_name = LayerName.BACKGROUND
+        self.context.game_objects.append(bg)
+
+
     def hide_panel(self):
         super().hide_panel()
         # delete all gameplay objects to stop gameplay
         self.context.game_objects = []
 
     def execute_render(self):
-        # bg
-        self.bg.execute_render()
-        
         # lives
         for i in range(self.context.lives):
             self.lives_icons[i].execute_render()

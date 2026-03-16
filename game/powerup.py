@@ -11,13 +11,13 @@ from effects import EffectType
 
 
 class PowerupType(Enum):
-    SLOW_BALLS = "powerupA_"
+    SLOW_BALL = "powerupA_"
     STICKY_PADDLE = "powerupB_"
     MULTIPLY_BALL = "powerupC_"
     ENLARGE_PADDLE = "powerupD_"
     SHOOTING_PADDLE = "powerupE_"
 
-    HASTE_BALLS = "malusA_"
+    HASTE_BALL = "malusA_"
     SHRINK_PADDLE = "malusB_"
 
     HEART = "heartUI_"
@@ -47,10 +47,10 @@ class Powerup(GameObject):
 
     def debug_specific_powerup(self):
         debug_list = [
-            PowerupType.SLOW_BALLS,
-            PowerupType.HASTE_BALLS
-            # PowerupType.SHOOTING_PADDLE
-            # PowerupType.STICKY_PADDLE,
+            # PowerupType.SLOW_BALL,
+            # PowerupType.HASTE_BALL
+            PowerupType.SHOOTING_PADDLE,
+            PowerupType.STICKY_PADDLE,
             ]
         return random.choice(debug_list) # DEBUG
 
@@ -70,7 +70,7 @@ class Powerup(GameObject):
         # play SFX
         if self.powerup_type == PowerupType.COIN:
             self.context.sound_manager.play_sfx(SfxType.COIN)
-        elif self.powerup_type == PowerupType.SHRINK_PADDLE or self.powerup_type == PowerupType.HASTE_BALLS:
+        elif self.powerup_type == PowerupType.SHRINK_PADDLE or self.powerup_type == PowerupType.HASTE_BALL:
             self.context.sound_manager.play_sfx(SfxType.MALUS_GET)
         else:
             self.context.sound_manager.play_sfx(SfxType.POWERUP_GET)
@@ -83,12 +83,13 @@ class Powerup(GameObject):
             string = string.capitalize()
             self.spawn_text_particle(string, 14, 180)
 
+
         powerup_duration = GameConstants.POWERUP_DURATION.value
         malus_duration = GameConstants.MALUS_DURATION.value
 
         # collect powerup grants 20 points, coins grant 100
         if self.powerup_type == PowerupType.COIN:
-            self.context.game_controller.gain_score(100, None)
+            self.context.game_controller.gain_score(100, self)
         else:
             self.context.game_controller.gain_score(20, None)
 
@@ -113,10 +114,10 @@ class Powerup(GameObject):
             case PowerupType.STICKY_PADDLE:
                 self.context.player.effect_controller.add_effect(EffectType.STICKY_PADDLE, 16, powerup_duration, sprite_name)
 
-            case PowerupType.SLOW_BALLS:
-                self.context.game_controller.effect_controller.add_effect(EffectType.SLOW_BALLS, 0.5, powerup_duration/2, sprite_name)
-            case PowerupType.HASTE_BALLS:
-                self.context.game_controller.effect_controller.add_effect(EffectType.HASTE_BALLS, 0.5, powerup_duration/2, sprite_name)
+            case PowerupType.SLOW_BALL:
+                self.context.game_controller.effect_controller.add_effect(EffectType.SLOW_BALL, 0.5, powerup_duration/2, sprite_name)
+            case PowerupType.HASTE_BALL:
+                self.context.game_controller.effect_controller.add_effect(EffectType.HASTE_BALL, 0.5, powerup_duration/2, sprite_name)
             
             case PowerupType.MULTIPLY_BALL:
                 self.context.game_controller.multiply_ball()

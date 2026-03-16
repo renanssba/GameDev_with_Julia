@@ -31,20 +31,23 @@ class Brick(GameObject):
 
     def be_hit(self, damage=1, shot_body=None):
         self.context.sound_manager.play_sfx(SfxType.BRICK_HIT)
-        if shot_body is not None:
-            hit_particle = Particle(self.context, 0, 0, ParticleType.HIT)
-            hit_particle.velocity = Vector2(0, 0)
-
-            part_frames = hit_particle.num_frames
-            part_framerate = hit_particle.framerate
-            hit_particle.lifetime = part_frames * part_framerate
-            
-            hit_particle.set_body_center(shot_body.center[0], shot_body.center[1])
-            self.context.game_objects.append(hit_particle)
+        if shot_body is not None and self.context.advanced_features:
+            self.spawn_hit_particle(shot_body)
         self.hp -= damage
         if self.hp <= 0:
             self.die()
             return
+
+    def spawn_hit_particle(self, shot_body):
+        hit_particle = Particle(self.context, 0, 0, ParticleType.HIT)
+        hit_particle.velocity = Vector2(0, 0)
+
+        part_frames = hit_particle.num_frames
+        part_framerate = hit_particle.framerate
+        hit_particle.lifetime = part_frames * part_framerate
+        hit_particle.set_body_center(shot_body.center[0], shot_body.center[1])
+        self.context.game_objects.append(hit_particle)
+
 
     def die(self):
         self.context.game_controller.gain_score(100, self)

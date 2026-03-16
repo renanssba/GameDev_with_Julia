@@ -24,22 +24,22 @@ class BallLevel:
 
 class Ball(GameObject):
     def __init__(self, x, y, context):
-        super().__init__(x, y, "ball", context)
+        super().__init__(x, y, "ball_", context)
 
         # x and y are the center of the ball
         self.set_body_center(x, y)
 
         # extra sprites
-        self.img_default = self.img
-        self.img_strong = self.load_spritesheet("ball_strong_")
-        self.img_power = self.load_spritesheet("ball_power_")
+        # self.img_default = self.img
+        # self.img_strong = self.load_spritesheet("ball_strong_")
+        # self.img_power = self.load_spritesheet("ball_power_")
         self.player_combo = 0 # number of times the ball has hit the player jumping
-        self.num_frames = 1
+        self.num_frames = 2
 
         # ball levels (sprites and trail colors)
-        level_0 = (BallLevel(self.img_default, (109, 138, 141, 255), GameConstants.BALL_DIAMETER.value-2))
-        level_1 = (BallLevel(self.img_strong, (217, 36, 60, 255), GameConstants.BALL_DIAMETER.value))
-        level_2 = (BallLevel(self.img_power, (255, 216, 50, 255), GameConstants.BALL_DIAMETER.value+6))
+        level_0 = (BallLevel(self.img, (109, 138, 141, 255), GameConstants.BALL_DIAMETER.value-2))
+        level_1 = (BallLevel(self.img, (217, 36, 60, 255), GameConstants.BALL_DIAMETER.value))
+        level_2 = (BallLevel(self.img, (255, 216, 50, 255), GameConstants.BALL_DIAMETER.value+6))
         self.ball_levels = [level_0, level_1, level_2]
 
         self.trail = TrailRenderer(context, max_positions=25, width=self.body.width-2, color=level_0.trail_color)
@@ -53,6 +53,10 @@ class Ball(GameObject):
         self.debug_label = UiLabel(0-self.context.screen.x, self.context.screen.height, "-\n-", self.context.ui_font, self.context)
         self.debug_label.align_body_top()
         self.debug_label.align_body_top()
+
+    def current_frame_number(self):
+        base = super().current_frame_number()
+        return base + min(self.player_combo, 2)*2
 
     def be_launched(self):
         launch_velocity = Vector2(0, -3.5)
@@ -162,7 +166,7 @@ class Ball(GameObject):
             self.particle_generator = ObjectSpawner(self.context, Particle, 2, pygame.Rect(-width/2, -width/2, width, width))
             self.particle_generator.particle_type = ParticleType.FIRE
             self.particle_generator.parent = self
-            self.particle_generator.objs_per_burst = 6
+            self.particle_generator.objs_per_burst = 2
 
     def reset_combo(self):
         self.player_combo = 0
@@ -248,8 +252,8 @@ class Ball(GameObject):
     def update_sprite(self):
         current_level = self.ball_levels[min(self.player_combo, 2)]
         
-        self.img = current_level.sprite
-        self.num_frames = self.get_sprite_size("")[0] / self.frame_width
+        # self.img = current_level.sprite
+        # self.num_frames = self.get_sprite_size("")[0] / self.frame_width
         self.trail.color = current_level.trail_color
         self.trail.width = current_level.trail_size
 

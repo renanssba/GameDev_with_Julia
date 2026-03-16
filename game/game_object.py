@@ -58,15 +58,18 @@ class GameObject(Displayable):
         if img_name.endswith('_'):
             sprite_path = self.img_path(img_name, num_frames)
             if self.sprite_exists(sprite_path):
-                # print(f"Sprite found multiple frames ({num_frames}): {sprite_path}")
-                return im.Image(sprite_path)
+                self.img_skins = []
+                self.img_skins.append(im.Image(sprite_path))
+                self.img_skins.append(im.Image(self.img_path_reskin(img_name, num_frames)))
+                return self.img_skins[self.context.reskin] # return correct skin
         
         sprite_path = self.img_path(img_name, "")
         if self.sprite_exists(sprite_path):
-            # print(f"Sprite found (1 single frame): {sprite_path}")
-            return im.Image(sprite_path)
+            self.img_skins = []
+            self.img_skins.append(im.Image(sprite_path))
+            self.img_skins.append(im.Image(self.img_path_reskin(img_name, "")))
+            return self.img_skins[self.context.reskin] # return correct skin
 
-        # print(f"ERROR: Sprite not found: {sprite_path}")
         return None
     
 
@@ -80,7 +83,14 @@ class GameObject(Displayable):
     
     def img_path(self, img_name, index):
         return f"sprites/{img_name}{index}.png"
+    
+    ### RESKIN SYSTEM ###
+    def img_path_reskin(self, img_name, index):
+        return f"sprites_reskin/{img_name}{index}.png"
 
+    def toggle_reskin(self):
+        if hasattr(self, 'img_skins') and len(self.img_skins) > 0:
+            self.img = self.img_skins[self.context.reskin]
 
     def sprite_exists(self, sprite_path):
         if renpy.loader.loadable(sprite_path):
@@ -212,6 +222,19 @@ class GameObject(Displayable):
         return self.body.colliderect(other.body)
 
     def limit_to_screen(self):
+        did_clamp_x = False
+        did_clamp_y = False
+        clamped_x = max(0, min(self.body.x, self.context.screen.width - self.body.w))
+        clamped_y = max(0, min(self.body.y, self.context.screen.height - self.body.h))
+        if clamped_x != self.body.x:
+            self.body.x = clamped_x
+            did_clamp_x = True
+        if clamped_y != self.body.y:
+            self.body.y = clamped_y
+            did_clamp_y = True
+        return did_clamp_x or did_clamp_y
+
+        # old implementation
         half_width = self.body.width / 2
         clamped_x = max(half_width, min(self.body_center().x, self.context.screen.width - half_width))
         if clamped_x != self.body_center().x:

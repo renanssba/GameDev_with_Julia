@@ -9,9 +9,11 @@ class EffectType(Enum):
     ENLARGE_PADDLE = "enlarge_paddle"
     SHRINK_PADDLE = "shrink_paddle"
     SHOOTING_PADDLE = "shots"
-    SLOW_BALLS = "slow_time"
-    HASTE_BALLS = "haste_balls"
+    SLOW_BALL = "slow_time"
+    HASTE_BALL = "haste_balls"
     STICKY_PADDLE = "sticky_paddle"
+
+    ACTIVATE_RESKIN_ON_END = "activate_reskin_on_effect"
 
 class Effect:
     def __init__(self, effect_type: EffectType, intensity, duration, context):

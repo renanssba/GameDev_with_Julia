@@ -26,6 +26,10 @@ class Particle(GameObject):
         self.lifetime_current += 1
         if self.lifetime_current >= self.lifetime:
             self.die()
+
+    def toggle_reskin(self):
+        super().toggle_reskin()
+        self.update_body_from_image(self.body.x, self.body.y)
     
     def die(self):
         self.context.game_objects.remove(self)

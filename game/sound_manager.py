@@ -35,6 +35,7 @@ class SfxType(Enum):
     MENU_MUSIC = "menu"
     VICTORY_MUSIC = "victory"
     DEFEAT_MUSIC = "defeat"
+    JULIA_MODE_MUSIC = "julia_mode"
 
 
 

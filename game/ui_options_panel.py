@@ -153,9 +153,7 @@ class UiOptionsPanel(UiPanel):
         self.option_values[0] = data["master_volume"]
         self.option_values[1] = data["sfx_volume"]
         self.option_values[2] = data["music_volume"]
-        self.option_values[3] = data["fullscreen"]
+        self.option_values[3] = self.is_fullscreen()
 
         # apply loaded values to the context
         self.context.sound_manager.set_volumes(self.option_values[0], self.option_values[1], self.option_values[2])
-        if self.is_fullscreen() != bool(data["fullscreen"]):
-            self.toggle_fullscreen()

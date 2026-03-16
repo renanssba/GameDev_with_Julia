@@ -12,13 +12,9 @@ class StageController():
     def __init__(self, context):
         self.context = context
 
-    def setup(self, stage_id):
-        self.stage_id = stage_id
-        self.reset_stage()
-
     def reset_stage(self):
         self.context.game_objects = []  # reset game objects
-        self.context.stage_id = self.stage_id
+        self.stage_id = self.context.current_stage
 
         self.context.lives = GameConstants.INITIAL_LIVES.value
         self.context.score = 0
@@ -53,7 +49,7 @@ class StageController():
                         newBrick = Brick(i * GameConstants.BRICK_WIDTH.value + dx.x, j * GameConstants.BRICK_HEIGHT.value + dx.y, 4, self.context)
                         self.context.game_objects.append(newBrick)
                     elif char == "#":
-                        newBrick = Brick(i * GameConstants.BRICK_WIDTH.value + dx.x, j * GameConstants.BRICK_HEIGHT.value + dx.y, 16, self.context)
+                        newBrick = Brick(i * GameConstants.BRICK_WIDTH.value + dx.x, j * GameConstants.BRICK_HEIGHT.value + dx.y, 12, self.context)
                         self.context.game_objects.append(newBrick)
 
                     if newBrick is not None:

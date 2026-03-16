@@ -4,6 +4,7 @@ init -1 python:
     from constants import GameConstants
     from ball import Ball
     from brick import Brick
+    from paddle import Paddle
     from game_context import GameContext, GameState
     from stage_controller import StageController
     from ui_info_panel import UiInfoPanel
@@ -13,20 +14,24 @@ init -1 python:
     from ui_options_panel import UiOptionsPanel
     from ui_leaderboard_panel import UiLeaderboardPanel
     from ui_end_card_panel import UiEndCardPanel
+    from ui_transition_panel import UiTransitionPanel
     from sound_manager import SoundManager, SfxType
     from effects import EffectType
     from effect_controller import EffectController
     import renpy.display.im as im
     from renpy.display.core import IgnoreEvent
+    from renpy.display.layout import Transform
 
     class GameController(renpy.Displayable):
-        def __init__(self):
+        def __init__(self, start_stage, last_stage):
             super(GameController, self).__init__()
             self.game = GameContext(
                 GameConstants.WIDTH.value,
                 GameConstants.HEIGHT.value,
                 GameConstants.BRICK_WIDTH.value * GameConstants.BRICK_COLUMNS.value,
                 GameConstants.HEIGHT.value,
+                start_stage,
+                last_stage,
             )
             self.game.game_controller = self
             
@@ -42,17 +47,25 @@ init -1 python:
             
             # Setup stage (player, sound, level)
             self.stage_controller = StageController(self.game)
-            self.stage_controller.setup(self.game.stage_id)
+            self.stage_controller.reset_stage()
 
             # Initialize game-wide effects
             self.effect_controller = EffectController(self)
 
             # End card panels
             self.victory_panel = UiEndCardPanel(self.game.ui_font_bold, ["YOU WIN!", "Score 1000"], self.game)
-            self.defeat_panel = UiEndCardPanel(self.game.ui_font_bold, ["GAME OVER", "Try again", "Score 1000"], self.game)
-
+            self.defeat_panel = UiEndCardPanel(self.game.ui_font_bold, ["GAME OVER...", "Try again", "Score 1000"], self.game)
+            # play or stop music when opening those
             self.victory_panel.show_panel = (lambda: self.game.sound_manager.play_music(SfxType.VICTORY_MUSIC))
             self.defeat_panel.show_panel = (lambda: self.game.sound_manager.stop_music())
+
+            # Transition panels
+            transition_data = []
+            transition_data.name = "Stage Clear!"
+            option = []
+            option.name = "Next"
+            transition_data.options = [option]
+            self.transition_panel = UiTransitionPanel(transition_data, self.game)
 
             # DEBUG PRINT ALL FILES
             # self.print_list_files()
@@ -65,6 +78,7 @@ init -1 python:
             # DEBUG
             # self.game.debug = True
             if(self.game.debug):
+                # self.open_panel(self.transition_panel)
                 self.open_panel(self.gameplay_panel)
             else:
                 self.open_panel(self.title_ui)
@@ -140,8 +154,6 @@ init -1 python:
             self.gameplay_panel.update_ui()
             if obj is not None:
                 obj.spawn_text_particle(f"+{amount}")
-            else:
-                self.game.player.spawn_text_particle(f"+{amount}")
 
         def update_ui(self):
             self.gameplay_panel.update_ui()
@@ -167,22 +179,21 @@ init -1 python:
             # cria main_render que conterá o jogo inteiro
             self.game.main_render = renpy.Render(self.game.w, self.game.h)
             self.game._background_layer = renpy.Render(self.game.w, self.game.h)
+
             self.game._effects_back_layer = renpy.Render(self.game.w, self.game.h)
+
             self.game._foreground_layer = renpy.Render(self.game.w, self.game.h)
             self.game._effects_front_layer = renpy.Render(self.game.w, self.game.h)
             self.game._ui_layer = renpy.Render(self.game.w, self.game.h)
 
-            color_game_space = GameConstants.COLOR_GAME_SPACE.value
-            color_game_space_border = GameConstants.COLOR_GAME_SPACE_BORDER.value
-            color_transparent = GameConstants.COLOR_TRANSPARENT.value
-            color_black = GameConstants.COLOR_RAW_BLACK.value
-            
-            # self.game._background_layer.fill(color_transparent)
-
             
         def merge_all_layers(self):
             self.game.main_render.blit(self.game._background_layer, (0, 0))
-            self.game.main_render.blit(self.game._effects_back_layer, (0, 0))
+            # effects_back com 50% de opacidade
+            effects_back_wrapper = _LayerAsDisplayable(lambda: self.game._effects_back_layer)
+            effects_back_with_alpha = renpy.render(Transform(child=effects_back_wrapper, alpha=0.5), self.game.w, self.game.h, self.game.st, self.game.at)
+            self.game.main_render.blit(effects_back_with_alpha, (0, 0))
+
             self.game.main_render.blit(self.game._foreground_layer, (0, 0))
             self.game.main_render.blit(self.game._effects_front_layer, (0, 0))
             self.game.main_render.blit(self.game._ui_layer, (0, 0))
@@ -193,6 +204,9 @@ init -1 python:
         def set_game_state(self, game_state):
             self.game.set_state(game_state)
             match game_state:
+                case GameState.TITLE:
+                    self.close_all_panels()
+                    self.open_panel(self.title_ui)
                 case GameState.RUNNING:
                     self.stage_controller.reset_stage()
                     self.open_panel(self.gameplay_panel)
@@ -210,6 +224,9 @@ init -1 python:
                     self.close_all_panels()
                     self.open_panel(self.title_ui)
                     self.open_panel(self.defeat_panel)
+                case GameState.TRANSITION:
+                    self.close_all_panels()
+                    self.open_panel(self.transition_panel)
 
         @property
         def current_panel(self):
@@ -235,8 +252,8 @@ init -1 python:
             while self.panel_list:
                 self.close_current_panel()
 
-        def is_still_running(self):
-            return self.panel_list != []
+        def should_end_minigame(self):
+            return self.panel_list == []
 
 
         def multiply_ball(self):
@@ -259,12 +276,20 @@ init -1 python:
                 random_ball.multiply_ball()
 
         def check_victory(self):
-            if not self.any_of_this_type(Brick):
+            if not self.any_of_this_type(Brick) and self.any_of_this_type(Paddle):
                 self.victory_panel.options[1].ui_label.update_text(f"Score {self.game.score}")
+                self.advance_stage()
+
+        def advance_stage(self):
+            self.game.game_objects = []
+            self.game.current_stage += 1
+            if self.game.current_stage > self.game.last_stage:
                 self.set_game_state(GameState.VICTORY)
+            else:
+                self.set_game_state(GameState.TRANSITION)
 
         def check_defeat_or_revive(self):
-            if not self.any_of_this_type(Ball):
+            if not self.any_of_this_type(Ball) and self.any_of_this_type(Paddle):
                 if self.game.lives > 0:
                     self.game.lives -= 1
                     self.game.player.prepare_ball()
@@ -340,7 +365,7 @@ init -1 python:
             if self.current_panel is not None:
                 self.current_panel.process_inputs(ev)
 
-            if not self.is_still_running():
+            if self.should_end_minigame():
                 renpy.end_interaction("quit_minigame")
             return None
 
@@ -381,4 +406,13 @@ init -1 python:
             for file in list_of_files:
                 print("file: ", file)
             print("total files: ", len(list_of_files))
+
+
+    class _LayerAsDisplayable(renpy.Displayable):
+        """Displayable que devolve um Render (a layer) para poder aplicar Transform(alpha=...)."""
+        def __init__(self, get_layer, **kwargs):
+            super(_LayerAsDisplayable, self).__init__(**kwargs)
+            self.get_layer = get_layer
+        def render(self, width, height, st, at):
+            return self.get_layer()
 

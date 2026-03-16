@@ -46,5 +46,4 @@ class UiPausePanel(UiPanel):
         self.context.game_controller.set_game_state(GameState.OPTIONS)
         
     def quit_game(self):
-        self.context.game_controller.close_current_panel()
-        self.context.game_controller.close_current_panel()
+        self.context.game_controller.set_game_state(GameState.TITLE)

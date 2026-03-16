@@ -11,6 +11,7 @@ class GameState(Enum):
     TITLE = "title"
     LEADERBOARD = "leaderboard"
     OPTIONS = "options"
+    TRANSITION = "transition"
 
 class LayerName(Enum):
     BACKGROUND = "background"
@@ -21,12 +22,15 @@ class LayerName(Enum):
 
 
 class GameContext:
-    def __init__(self, width, height, game_space_width, game_space_height):
+    def __init__(self, width, height, game_space_width, game_space_height, start_stage, last_stage):
         # Guardar resolução base para permitir trocar escala depois
         self._base_width = width
         self._base_height = height
-
-        # self._screen = pygame.display.set_mode((width, height), pygame.SCALED)
+        
+        # Current Stage
+        self.start_stage = start_stage
+        self.last_stage = last_stage
+        self.current_stage = self.start_stage
 
         # Game space é a área onde os objetos são renderizados
         # x e y são a posição da "câmera"
@@ -83,9 +87,6 @@ class GameContext:
         self.score = 0
         self.lives = GameConstants.INITIAL_LIVES.value
 
-        # Current Stage
-        self.stage_id = 1
-
         # Game Controller
         self.game_controller = None
 
@@ -111,29 +112,6 @@ class GameContext:
 
     def current_screen_scale(self):
         return pygame.display.get_window_size()[0] / self._screen.get_width()
-
-    def resize(self, scale: int):
-        """Altera a resolução da janela mantendo o game space centralizado."""
-        if scale < 1:
-            scale = 1
-        width = int(self._base_width * scale)
-        height = int(self._base_height * scale)
-
-        # Atualiza janela
-        self._screen = pygame.display.set_mode((width, height))
-
-        # Recria camadas com o novo tamanho
-        self._background_layer = pygame.Surface((width, height), pygame.SRCALPHA)
-        self._effects_back_layer = pygame.Surface((width, height), pygame.SRCALPHA)
-        self._foreground_layer = pygame.Surface((width, height), pygame.SRCALPHA)
-        self._effects_front_layer = pygame.Surface((width, height), pygame.SRCALPHA)
-        self._ui_layer = pygame.Surface((width, height), pygame.SRCALPHA)
-
-        # Reposiciona o game space mantendo largura/altura atuais
-        gs_w = self._game_space.width
-        gs_h = self._game_space.height
-        self._game_space.x = (width - gs_w) / 2
-        self._game_space.y = (height - gs_h) / 2
 
     @property
     def state(self):

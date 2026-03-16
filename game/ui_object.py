@@ -1,5 +1,4 @@
-
-import re
+import pygame
 from enum import Enum
 from constants import GameConstants
 from game_context import GameContext, GameState, LayerName
@@ -7,7 +6,8 @@ from game_object import GameObject
 from utils import color_to_hex
 import renpy
 from frect import FRect
-from renpy.display.render import render as renpy_render
+from renpy.display.render import render as renpy_render, Render
+from renpy.display.imagelike import Solid
 
 
 
@@ -93,8 +93,6 @@ class UiOverlay(UiObject):
         self.body.x = -context.screen.x
 
     def render(self, width, height, st, at):
-        from renpy.display.render import Render
-        from renpy.display.imagelike import Solid
         solid = Solid(self._color)
         r = Render(int(self.body.width), int(self.body.height))
         r.place(solid, 0, 0, int(self.body.width), int(self.body.height), st=st, at=at)
@@ -122,13 +120,38 @@ class UiBar(UiObject):
     def execute_render(self):
         my_render = super().execute_render()
         
-        fill_width = int(self.value / (self.max_value - self.min_value) * self.body.width-2)
+        fill_width = self.value / (self.max_value - self.min_value) * self.body.width
         fill_frame = self.get_frame(0)
 
         original_width = self.body.width
         self.body.width = fill_width
-        self.body.x += 1
 
         my_render = self.framed_render(fill_frame, my_render)
         self.body.width = original_width
-        self.body.x -= 1
+
+
+class EffectDurationBar(UiObject):
+    def __init__(self, effect, sprite_name, context):
+        super().__init__(0, 0, sprite_name, context)
+        self.effect = effect
+
+        new_bar = UiBar(self.context, "bar_", pygame.Rect(0, 0, 64, self.body.height)) # will be positioned later
+        new_bar.max_value = effect.duration
+        new_bar.set_value(effect.duration)
+        self.duration_bar = new_bar
+
+    def current_frame_number(self):
+        return 0 # always show first frame
+
+    def reposition(self, x, y):
+        self.body.x = x
+        self.body.y = y
+        self.duration_bar.body.x = self.body.x + self.body.width + 4
+        self.duration_bar.body.y = self.body.y
+
+    def execute_render(self):
+        super().execute_render()
+        duration_left = (self.effect.duration - self.effect.current_frame)
+        duration_left = max(0, duration_left)
+        self.duration_bar.set_value(duration_left)
+        self.duration_bar.execute_render()

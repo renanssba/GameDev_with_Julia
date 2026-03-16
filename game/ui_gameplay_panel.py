@@ -19,8 +19,17 @@ class UiGameplayPanel(UiPanel):
             self.lives_icons.append(UiObject(-context.screen.x + i * 20 + dx, 2, "heart", context))
 
         # Background
-        self.bg = UiOverlay(context, LayerName.UI, GameConstants.COLOR_GAME_SPACE.value)
+        # self.bg = UiOverlay(context, LayerName.UI, GameConstants.COLOR_GAME_SPACE.value)
+        # self.bg.layer_name = LayerName.BACKGROUND
+
+        # Border
+        self.bg = UiObject(0, 0, "gameplay_border", self.context)
+        self.bg.body.width = context.screen.width
+        self.bg.body.height = context.screen.height
         self.bg.layer_name = LayerName.BACKGROUND
+
+        # Effect Duration bars
+        self.effect_bars = []
 
         # Debug Label
         self.debug_ui = UiLabel(context.screen.x+context.screen.width, 4, "Debug", context.ui_font, context)
@@ -48,12 +57,30 @@ class UiGameplayPanel(UiPanel):
     def show_panel(self):
         super().show_panel()
         self.context.sound_manager.play_music(SfxType.GAMEPLAY_MUSIC)
+        # reset effect bars
+        self.effect_bars = []
+
+    def hide_panel(self):
+        super().hide_panel()
+        # delete all gameplay objects to stop gameplay
+        self.context.game_objects = []
 
     def execute_render(self):
+        # bg
         self.bg.execute_render()
+        
+        # lives
         for i in range(self.context.lives):
             self.lives_icons[i].execute_render()
+        
+        # score
         self.score_label.execute_render()
+
+        # effect duration bars
+        for bar in self.effect_bars:
+            bar.execute_render()
+        
+        # debug info
         if self.context.debug:
             self.debug_ui.execute_render()
             self._fps_update_accum += self.context.delta_time
@@ -66,6 +93,24 @@ class UiGameplayPanel(UiPanel):
     def update_ui(self):
         self.score_label.update_text(str(self.context.score))
         self.execute_render()
+
+
+    # effect duration bars
+    def add_effect_bar(self, new_bar):
+        self.effect_bars.append(new_bar)
+        self.reposition_effect_bars()
+
+    def remove_effect_bar(self, effect):
+        for bar in self.effect_bars:
+            if bar.effect == effect:
+                self.effect_bars.remove(bar)
+                self.reposition_effect_bars()
+                return
+
+    def reposition_effect_bars(self):
+        for i in range(len(self.effect_bars)):
+            bar = self.effect_bars[i]
+            bar.reposition(4 - self.context.screen.x, self.context.screen.height - (bar.body.height + 4) * (i + 1) - 4)
 
 
     def process_panel_specific_inputs(self, event):

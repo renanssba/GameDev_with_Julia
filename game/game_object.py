@@ -187,9 +187,9 @@ class GameObject(Displayable):
         my_render.place(framed, 0, 0, w, h, st=self.context.st, at=self.context.at)
         return my_render
 
-    def spawn_text_particle(self, text):
+    def spawn_text_particle(self, text, size=8, duration=120):
         from particle import TextParticle
-        text_particle = TextParticle(self.context, self.body_center().x, self.body_center().y, text, 120)
+        text_particle = TextParticle(self.context, self.body_center().x, self.body_center().y, text, duration, size)
         self.context.game_objects.append(text_particle)
 
 

@@ -7,7 +7,6 @@ from vector2 import Vector2
 class Shot(GameObject):
     def __init__(self, x, y, context):
         super().__init__(x, y, "shot_", context)
-        self.body.width -= 4
         self.velocity = Vector2(0, -3)
         self.align_body_left()
 
@@ -19,7 +18,7 @@ class Shot(GameObject):
         for brick in self.context.game_objects:
             if isinstance(brick, Brick):
                 if self.collide_with(brick):
-                    brick.be_hit(damage=1)
+                    brick.be_hit(1, self.body)
                     self.die()
                     return
 

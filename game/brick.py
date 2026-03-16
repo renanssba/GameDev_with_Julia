@@ -4,6 +4,8 @@ from game_object import GameObject
 from sound_manager import SfxType
 from powerup import Powerup, PowerupType
 from constants import GameConstants
+from particle import ParticleType, Particle
+from vector2 import Vector2
 
 
 class Brick(GameObject):
@@ -27,8 +29,18 @@ class Brick(GameObject):
     def apply_physics(self):
         pass
 
-    def be_hit(self, damage=1):
+    def be_hit(self, damage=1, shot_body=None):
         self.context.sound_manager.play_sfx(SfxType.BRICK_HIT)
+        if shot_body is not None:
+            hit_particle = Particle(self.context, 0, 0, ParticleType.HIT)
+            hit_particle.velocity = Vector2(0, 0)
+
+            part_frames = hit_particle.num_frames
+            part_framerate = hit_particle.framerate
+            hit_particle.lifetime = part_frames * part_framerate
+            
+            hit_particle.set_body_center(shot_body.center[0], shot_body.center[1])
+            self.context.game_objects.append(hit_particle)
         self.hp -= damage
         if self.hp <= 0:
             self.die()

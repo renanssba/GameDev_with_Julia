@@ -1,5 +1,6 @@
 import pygame
-
+from renpy.display.render import render as renpy_render
+import renpy
 from game_context import LayerName
 from vector2 import Vector2
 
@@ -22,9 +23,15 @@ class TrailRenderer:
         n = min(len(c1), len(c2))
         return tuple(int(c1[j] + (c2[j] - c1[j]) * t) for j in range(n))
 
-    def render(self):
+    def execute_render(self):
+        self.render(self.context.w, self.context.h, self.context.st, self.context.at)
+
+    def render(self, width, height, st, at):
+        my_render = self.context.get_layer(self.layer_name.value)
+        canvas = my_render.canvas()
+
         r, g, b = self.color[:3]
-        white_color = (r, g, b, 64)
+        white_color = (r, g, b, 255)
         for i in range(len(self.positions) - 1):
             t = (i + 1) / len(self.positions)
             line_width = max(1, int(self.width * t))
@@ -32,7 +39,8 @@ class TrailRenderer:
 
             start = self.positions[i] + Vector2(self.context.screen.x, self.context.screen.y)
             end = self.positions[i + 1] + Vector2(self.context.screen.x, self.context.screen.y)
-            pygame.draw.line(self.context.get_layer(self.layer_name.value), line_color, (int(start.x), int(start.y)), (int(end.x), int(end.y)), line_width)
+            
+            canvas.line(line_color, (int(start.x), int(start.y)), (int(end.x), int(end.y)), line_width)
 
     def clear(self):
         self.positions = []

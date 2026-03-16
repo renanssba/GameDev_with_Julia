@@ -143,6 +143,9 @@ class UiLeaderboardPanel(UiPanel):
         self.labels[self.inputing_name_position].update_text(f"{entry.name} - {entry.score}")
 
     def confirm_player_name(self):
+        if len(self.player_input) == 0:
+            self.context.sound_manager.play_sfx(SfxType.UI_FORBIDDEN)
+            return
         self.context.sound_manager.play_sfx(SfxType.UI_CONFIRM)
         self.inputing_name = False
         self.spacebar_confirms_input = True
@@ -183,11 +186,9 @@ class UiLeaderboardPanel(UiPanel):
             return
 
         data = renpy.game.persistent.leaderboard
-        print(f"Leaderboard data loaded: {data}")
         for item in data:
             name = item.get("name", "Player")
             score = item.get("score", 0)
-            print(f"Leaderboard entry: {name} - {score}")
             self.entries.append(LeaderboardEntry(name, score))
 
     def reset_entries(self):

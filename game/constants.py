@@ -13,8 +13,8 @@ class GameConstants(Enum):
     BRICK_ROWS = 8
     BRICK_WIDTH = 32
     BRICK_HEIGHT = 16
-    BRICK_COIN_CHANCE = 0.3
-    BRICK_POWERUP_CHANCE = 0.4
+    BRICK_COIN_CHANCE = 0.4
+    BRICK_POWERUP_CHANCE = 0.12
 
     # Paddle
     PADDLE_WIDTH = 32

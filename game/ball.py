@@ -38,8 +38,8 @@ class Ball(GameObject):
 
         # ball levels (sprites and trail colors)
         level_0 = (BallLevel(self.img_default, (109, 138, 141, 255), GameConstants.BALL_DIAMETER.value-2))
-        level_1 = (BallLevel(self.img_strong, (217, 36, 60, 128), GameConstants.BALL_DIAMETER.value))
-        level_2 = (BallLevel(self.img_power, (255, 216, 50, 128), GameConstants.BALL_DIAMETER.value+6))
+        level_1 = (BallLevel(self.img_strong, (217, 36, 60, 255), GameConstants.BALL_DIAMETER.value))
+        level_2 = (BallLevel(self.img_power, (255, 216, 50, 255), GameConstants.BALL_DIAMETER.value+6))
         self.ball_levels = [level_0, level_1, level_2]
 
         self.trail = TrailRenderer(context, max_positions=25, width=self.body.width-2, color=level_0.trail_color)
@@ -77,14 +77,14 @@ class Ball(GameObject):
             pos_x = self.context.player.body_center().x + self.dist_to_paddle.x
             pos_y = self.context.player.body_center().y + self.dist_to_paddle.y
             self.set_body_center(pos_x, pos_y)
-            # self.trail.clear()
+            self.trail.clear()
             return
         
         # If not stuck to paddle, apply physics normally
         super().apply_physics(self.context.time_scale)
         
         # update trail positions
-        # self.trail.update(self.body_center())
+        self.trail.update(self.body_center())
 
         # Bounce in walls
         if self.body.y < 0:
@@ -106,10 +106,15 @@ class Ball(GameObject):
         for brick in self.context.game_objects:
             if isinstance(brick, Brick):
                 if self.collide_with(brick):
-                    if self.player_combo >= 2:
-                        brick.be_hit(damage=100)
+                    damage = 2
+                    ball_on_fire = self.player_combo >= 2
+                    if ball_on_fire:
+                        damage = 4
+                    brick.be_hit(damage, self.body)
+                    if ball_on_fire and brick.hp <= 0:
+                        # atravessa direto o bloco sem rebater se quebrou por fogo
+                        pass
                     else:
-                        brick.be_hit(damage=2)
                         normal = self.collision_normal(brick.body)
                         self.revert_before_collision(brick.body)
                         self.bounce_from_normal(normal)
@@ -231,7 +236,7 @@ class Ball(GameObject):
             self.particle_generator.update()
 
     def render(self, width, height, st, at):
-        self.trail.render()
+        self.trail.execute_render()
         result = super().render(width, height, st, at)
         if self.context.debug:
             vel_str = f"({self.velocity.x:.3f}, {self.velocity.y:.3f})"

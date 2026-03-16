@@ -1,5 +1,5 @@
-define julia = Character(image=None, color="#C161D4")
-define bg_julia = "vn_images/ep2 fri_game_julia_likeit2.png"
+define julia = Character(name="Julia", image=None, color="#C161D4")
+image bg_julia = "vn_images/ep2 fri_game_julia_likeit2.webp"
 
 init -2 python:
     from constants import GameConstants
@@ -25,11 +25,12 @@ screen ball_minigame(controller):
         # text "Vector" xalign 0.5 yalign 0.5 size 40 color "#fff"
 
 label start:
-    define config.language = "english"
     # desativa a tradução automática (força inglês)
+    define config.language = "english"
+    # desativa o modo de desenvolvedor
+    define config.developer = False
 
-    scene bg bg_julia
-    # show julia happy
+    scene bg_julia
 
     jump minigame
     julia "Hey, let's play a game!"
@@ -48,7 +49,7 @@ label minigame:
     $ renpy.block_rollback()
     $ config.keymap["director"] = []
 
-    call screen ball_minigame(GameController())
+    call screen ball_minigame(GameController(1, 3))
 
     $ quick_menu = True
     $ _game_menu_screen = 'save'

@@ -19,7 +19,7 @@ class Particle(GameObject):
         self.velocity = Vector2(0, -1)
         self.lifetime = lifetime
         self.lifetime_current = 0
-        self.layer_name = LayerName.EFFECTS_BACK
+        self.layer_name = LayerName.EFFECTS_FRONT
     
     def apply_physics(self):
         super().apply_physics()
@@ -32,18 +32,18 @@ class Particle(GameObject):
 
 
 class TextParticle(Particle):
-    def __init__(self, context, x, y, text, lifetime = 60):
+    def __init__(self, context, x, y, text, lifetime = 60, font_size=8):
         super().__init__(context, x, y, ParticleType.TEXT, lifetime)
         self.text = text
         self.font = context.score_font
+        self.font_size = font_size
 
-        self.velocity = Vector2(0, -0.3)
+        self.velocity = Vector2(0, -0.2)
 
         self.color = GameConstants.COLOR_WHITE.value
         self.layer_name = LayerName.EFFECTS_FRONT
         
-        # TODO: Implement text particle
-        self.label = UiLabel(0, 0, text, self.font, context, self.color)
+        self.label = UiLabel(0, 0, text, self.font, context, self.color, size=self.font_size)
         self.img = self.label.img
         self.frame_width = self.spritesheet_width
         self.num_frames = 1

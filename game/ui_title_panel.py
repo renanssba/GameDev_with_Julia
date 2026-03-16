@@ -24,6 +24,7 @@ class UiTitlePanel(UiPanel):
         super().render()
 
     def start_game(self):
+        self.context.current_stage = self.context.start_stage
         self.context.game_controller.set_game_state(GameState.RUNNING)
 
     def show_leaderboard(self):

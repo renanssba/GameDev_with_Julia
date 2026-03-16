@@ -4,6 +4,7 @@ from game_context import GameState, LayerName
 from ui_object import UiObject, UiLabel, UiOverlay
 from constants import GameConstants
 from sound_manager import SfxType
+from effects import EffectType
 
 
 class UiGameplayPanel(UiPanel):
@@ -51,7 +52,6 @@ class UiGameplayPanel(UiPanel):
 
     def show_panel(self):
         super().show_panel()
-        self.context.sound_manager.play_music(SfxType.GAMEPLAY_MUSIC)
         # reset effect bars
         self.effect_bars = []
 

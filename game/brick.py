@@ -1,4 +1,5 @@
 import random
+import pygame
 
 from game_object import GameObject
 from sound_manager import SfxType
@@ -6,19 +7,42 @@ from powerup import Powerup, PowerupType
 from constants import GameConstants
 from particle import ParticleType, Particle
 from vector2 import Vector2
+from object_spawner import ObjectSpawner
 
 
 class Brick(GameObject):
     def __init__(self, x, y, hp, context):
         spritesheet_name = self.get_spritesheet_name(hp)
-        # print("spritesheet_name: " + spritesheet_name)
+        print("spritesheet_name: " + spritesheet_name)
         super().__init__(x, y, spritesheet_name, context)
         self.hp_max = hp
         self.hp = self.hp_max
         self.framerate = 0
+        
+        self.powerup_spawner = None
+
+        # Special settings for Naomi boss
+        if spritesheet_name == "face_naomi":
+            print("sprite name: " + spritesheet_name + ", setting body width and height to 64")
+            self.body.w = 64
+            self.body.h = 64
+            self.frame_width = 64
+            self.spritesheet_height = 64
+            self.spritesheet_width = 64
+
+            self.powerup_spawner = ObjectSpawner(
+                self.context,
+                Powerup,
+                90,
+                pygame.Rect(0, 0, self.context.screen.width, 2),
+            )
+            self.powerup_spawner.powerup_type = PowerupType.STUN
+
 
     def get_spritesheet_name(self, hp):
-        if hp > 5:
+        if hp >= 20:
+            return "face_naomi"
+        elif hp > 5:
             name = "wall"
         else:
             name = "brick"
@@ -27,6 +51,8 @@ class Brick(GameObject):
         return name + letter_appended + "_"
 
     def apply_physics(self):
+        if self.powerup_spawner is not None:
+            self.powerup_spawner.update()
         pass
 
     def be_hit(self, damage=1, shot_body=None):
@@ -69,6 +95,8 @@ class Brick(GameObject):
 
 
     def current_frame_number(self):
+        if self.hp_max >= 20:
+            return 0
         fraction = float(self.hp) / float(self.hp_max)
         frame = int(fraction * (self.num_frames - 1))
         return (self.num_frames - 1 - frame)

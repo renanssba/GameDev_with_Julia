@@ -88,6 +88,10 @@ class Paddle(GameObject):
     def define_movement(self):
         if not self.context.game_controller.is_running():
             return
+
+        if self.effect_controller.has_effect(EffectType.STUN):
+            self.velocity.x = 0
+            return
         
         self.velocity.x = 0
         if self.context.left_pressed:

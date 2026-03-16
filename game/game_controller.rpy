@@ -18,6 +18,7 @@ init -1 python:
     from sound_manager import SoundManager, SfxType
     from effects import EffectType
     from effect_controller import EffectController
+    from reskinner import Reskinner
     import renpy.display.im as im
     from renpy.display.core import IgnoreEvent
     from renpy.display.layout import Transform
@@ -43,20 +44,20 @@ init -1 python:
             self.pause_ui = UiPausePanel(self.game)
             self.options_panel = UiOptionsPanel(self.game)
             self.leaderboard_panel = UiLeaderboardPanel(self.game)
+
+            # Initialize game-wide effects
+            self.effect_controller = EffectController(self)
             
             # Setup stage (player, sound, level)
             self.stage_controller = StageController(self.game)
             self.stage_controller.reset_stage()
-
-            # Initialize game-wide effects
-            self.effect_controller = EffectController(self)
 
             # End card panels
             self.victory_panel = UiEndCardPanel(self.game.ui_font_bold, ["YOU WIN!", "Score 1000"], self.game)
             self.defeat_panel = UiEndCardPanel(self.game.ui_font_bold, ["GAME OVER...", "Try again", "Score 1000"], self.game)
             # play or stop music when opening those
             self.victory_panel.show_panel = (lambda: self.game.sound_manager.play_music(SfxType.VICTORY_MUSIC))
-            self.defeat_panel.show_panel = (lambda: self.game.sound_manager.stop_music())
+            # self.defeat_panel.show_panel = (lambda: if self.game.reskin == 0: self.game.sound_manager.stop_music())
 
             # Transition panels
             transition_data = []
@@ -68,6 +69,9 @@ init -1 python:
 
             # DEBUG PRINT ALL FILES
             # self.print_list_files()
+
+            # Reskinner
+            self.reskinner = None
 
             # Initialize last frame time
             self.last_st = 0.0
@@ -160,7 +164,8 @@ init -1 python:
             for obj in self.game.game_objects:
                 obj.apply_physics()
             self.effect_controller.update()
-            
+            if self.reskinner is not None:
+                self.reskinner.update()
         
         ### RENDERING ###
         def render_everything(self):
@@ -226,6 +231,21 @@ init -1 python:
                 case GameState.TRANSITION:
                     self.close_all_panels()
                     self.open_panel(self.transition_panel)
+
+        def toggle_reskin(self, time_to_wait=0):
+            if self.game.reskin == 0:
+                self.game.reskin = 1
+            else:
+                self.game.reskin = 0
+
+            list_objects = []
+            list_objects.extend(self.game.game_objects)
+            list_objects.extend(self.gameplay_panel.objects_to_reskin)
+            list_objects.extend(self.title_ui.objects_to_reskin)
+            list_objects.extend(self.pause_ui.objects_to_reskin)
+            list_objects.extend(self.options_panel.objects_to_reskin)
+            list_objects.extend(self.leaderboard_panel.objects_to_reskin)
+            self.reskinner = Reskinner(self.game, list_objects, time_to_wait)
 
         @property
         def current_panel(self):
@@ -314,7 +334,9 @@ init -1 python:
                 case EffectType.HASTE_BALL:
                     self.game.time_scale /= GameConstants.HASTE_FACTOR.value
                 case EffectType.ACTIVATE_RESKIN_ON_END:
-                    self.gameplay_panel.toggle_reskin()
+                    self.toggle_reskin(3)
+                case EffectType.PLAY_JULIA_MUSIC_ON_END:
+                    self.game.sound_manager.play_music(SfxType.JULIA_MODE_MUSIC)
 
 
         def any_of_this_type(self, type):

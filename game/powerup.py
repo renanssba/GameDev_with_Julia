@@ -19,6 +19,7 @@ class PowerupType(Enum):
 
     HASTE_BALL = "malusA_"
     SHRINK_PADDLE = "malusB_"
+    STUN = "dds_"
 
     HEART = "heartUI_"
     COIN = "coin_"
@@ -113,6 +114,9 @@ class Powerup(GameObject):
                 self.context.player.effect_controller.add_effect(EffectType.SHOOTING_PADDLE, 16, powerup_duration/2, sprite_name)
             case PowerupType.STICKY_PADDLE:
                 self.context.player.effect_controller.add_effect(EffectType.STICKY_PADDLE, 16, powerup_duration, sprite_name)
+
+            case PowerupType.STUN:
+                self.context.player.effect_controller.add_effect(EffectType.STUN, 16, powerup_duration/8, sprite_name)
 
             case PowerupType.SLOW_BALL:
                 self.context.game_controller.effect_controller.add_effect(EffectType.SLOW_BALL, 0.5, powerup_duration/2, sprite_name)

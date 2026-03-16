@@ -88,7 +88,7 @@ class GameObject(Displayable):
     def img_path_reskin(self, img_name, index):
         return f"sprites_reskin/{img_name}{index}.png"
 
-    def toggle_reskin(self):
+    def update_skin(self):
         if hasattr(self, 'img_skins') and len(self.img_skins) > 0:
             self.img = self.img_skins[self.context.reskin]
 

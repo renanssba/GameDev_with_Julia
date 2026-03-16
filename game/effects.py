@@ -13,7 +13,10 @@ class EffectType(Enum):
     HASTE_BALL = "haste_balls"
     STICKY_PADDLE = "sticky_paddle"
 
-    ACTIVATE_RESKIN_ON_END = "activate_reskin_on_effect"
+    STUN = "stun"
+
+    PLAY_JULIA_MUSIC_ON_END = "play_julia_music_on_end"
+    ACTIVATE_RESKIN_ON_END = "activate_reskin_on_end"
 
 class Effect:
     def __init__(self, effect_type: EffectType, intensity, duration, context):

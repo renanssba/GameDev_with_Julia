@@ -1,6 +1,17 @@
 define julia = Character(name="Julia", image=None, color="#C161D4")
 define simon = Character(name="Simon", image=None, color="#5995ED")
-image bg_julia = "vn_images/ep2 fri_game_julia_likeit2.webp"
+
+image julia_normal = "vn_images/ep2 fri_game_julia_likeit2.webp"
+image julia_excited = "vn_images/ep2 fri_game_home_julia_goodluck.webp"
+image julia_stripping = "vn_images/ep2 fri_game_glitch2_service.webp"
+image julia_emotional = "vn_images/ep2 fri_game_home_julia_listens.webp"
+image julia_playing = "vn_images/ep2 fri_game_julia_lookingcute.webp"
+
+
+image simon_normal = "vn_images/ep2 fri_game_simon_notask.webp"
+image simon_confused = "vn_images/ep2 fri_game_home_excuse.webp"
+
+
 image black = "#000"
 
 define happy_song = "songs/nice_morning_loop.mp3"
@@ -193,13 +204,16 @@ label story_mode:
     simon "Hum, o que é isso? Algum jogo novo?"
 
     julia "Siiim! Não é apenas 'algum novo jogo'. É O PRÓXIMO GRANDE JOGO!"
-    julia "Eu chamo de 'Best Brick Breaker 2.0'!"
+    julia "Não é apenas o 'Break Time' que você criou."
+    julia "Este está muito melhor, mais empolgante, sensacional!"
+    julia "Eu chamo de 'Break Time with Julia'!"
 
-    simon "Best Brick Breaker 2.0? Foi você quem..?"
+    simon "'With Julia', é? Foi você quem...?"
 
     julia "Vamos, vamos! Vamos jogar!"
-    julia "Eu sei que você vai gostar!"
+    julia "Não temos tempo a perder!"
 
+label mini_3:
     $ prepare_minigame()
     call screen ball_minigame(GameController(3))
     $ back_from_minigame()
@@ -242,6 +256,7 @@ label story_mode:
     "O estômago de Simon ronca, reclamando que ele não come nada há um bom tempo."
     simon "Quero dizer, você sempre pode me pagar um almoço, haha."
     
+    scene julia_stripping
     julia "Hahaha, um almoço é? Quem sabe mais tarde."
     "Julia olha para Simon com um sorriso safado e começa a tirar as roupas lentamente."
     # julia starts stripping

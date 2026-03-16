@@ -4,6 +4,7 @@ from constants import GameConstants
 from game_context import LayerName
 from sound_manager import SfxType
 from ui_object import UiObject, UiLabel, UiOverlay
+from reskinner import Reskinner
 
 
 
@@ -96,7 +97,7 @@ class UiPanel(UiObject):
             if event.key == pygame.K_F12:
                 self.toggle_debug() # toggle debug mode
             if event.key == pygame.K_j and self.context.arcade_mode:
-                self.toggle_reskin() # toggle reskin
+                self.context.game_controller.toggle_reskin(2) # toggle reskin
 
         # DEFINE CURRENT PLAYER INPUT TYPE
         if event.type == pygame.KEYDOWN:
@@ -115,18 +116,6 @@ class UiPanel(UiObject):
 
     def toggle_debug(self):
         self.context.debug = not self.context.debug # toggle debug mode
-
-    def toggle_reskin(self):
-        if self.context.reskin == 0:
-            self.context.reskin = 1
-            self.context.sound_manager.play_music(SfxType.JULIA_MODE_MUSIC)
-        else:
-            self.context.reskin = 0
-            self.context.sound_manager.play_music(SfxType.GAMEPLAY_MUSIC)
-        for obj in self.context.game_objects:
-            obj.toggle_reskin()
-        for obj in self.objects_to_reskin:
-            obj.toggle_reskin()
 
     def process_debug_inputs(self, event):
         if not self.context.debug:

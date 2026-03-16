@@ -28,11 +28,12 @@ class GameContext:
         self._base_height = height
         
         # Current Stage
+        self.story_part = story_part
         self.load_config(story_part)
         self.current_stage = self.start_stage
 
         # DEBUG: force current stage to fixed value
-        self.current_stage = 1
+        # self.current_stage = 4
 
         # Game space é a área onde os objetos são renderizados
         # x e y são a posição da "câmera"
@@ -100,7 +101,7 @@ class GameContext:
         if story_part == -1:
             # this is the arcade mode
             self.start_stage = 1
-            self.last_stage = 3
+            self.last_stage = 4
             self.arcade_mode = True
         elif story_part == 1:
             # only story part 1 does not have advanced features
@@ -112,9 +113,9 @@ class GameContext:
             self.last_stage = 2
         elif story_part == 3:
             # apply reskin in julia's scene
-            self.reskin = 1
+            # self.reskin = 1
             self.start_stage = 3
-            self.last_stage = 3
+            self.last_stage = 4
 
 
     def get_layer(self, layer_name=LayerName.FOREGROUND):

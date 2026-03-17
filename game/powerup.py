@@ -4,7 +4,7 @@ import random
 import pygame
 
 from game_object import GameObject
-from sound_manager import SfxType
+from renpy.store import SfxType
 from vector2 import Vector2
 from constants import GameConstants
 from effects import EffectType

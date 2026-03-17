@@ -3,15 +3,15 @@ import pygame
 from ui_panel import UiPanel
 from game_context import GameState, GameConstants, LayerName
 from ui_object import UiOption, UiOverlay, UiObject
-from sound_manager import SfxType
+from renpy.store import SfxType
 
 class UiTitlePanel(UiPanel):
     def __init__(self, context):
         options = [
-            UiOption("Play", self.start_game, context),
-            UiOption("Leaderboards", self.show_leaderboard, context),
-            UiOption("Options", self.show_options, context),
-            UiOption("Exit", self.quit_game, context),
+            UiOption("Jogar", self.start_game, context),
+            UiOption("Placar", self.show_leaderboard, context),
+            UiOption("Opções", self.show_options, context),
+            UiOption("Sair", self.quit_game, context),
         ]
         super().__init__("", options, context)
         self.overlay = UiOverlay(context, LayerName.UI.value, GameConstants.COLOR_GAME_SPACE.value)

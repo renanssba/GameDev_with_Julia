@@ -2,7 +2,7 @@ import random
 import pygame
 
 from game_object import GameObject
-from sound_manager import SfxType
+from renpy.store import SfxType
 from powerup import Powerup, PowerupType
 from constants import GameConstants
 from particle import ParticleType, Particle

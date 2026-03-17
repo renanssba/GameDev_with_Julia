@@ -2,7 +2,7 @@ from enum import Enum
 from constants import GameConstants
 from game_object import GameObject
 from vector2 import Vector2
-from sound_manager import SfxType
+from renpy.store import SfxType
 from ball import Ball
 from shot import Shot
 from effects import EffectType

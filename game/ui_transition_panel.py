@@ -1,7 +1,7 @@
 from ui_panel import UiPanel
 from game_context import GameState
 from ui_options_panel import UiOption
-from sound_manager import SfxType
+from renpy.store import SfxType
 
 class UiTransitionPanel(UiPanel):
     def __init__(self, transition_data, context):

@@ -12,7 +12,7 @@
 ##
 ## O _() ao redor da string a marca como elegível para tradução.
 
-define config.name = _("GameDev with Julia")
+define config.name = _("Break Time with Julia")
 
 
 ## Determina se o título fornecido acima será mostrado na tela do menu
@@ -37,7 +37,7 @@ define gui.about = _p("""
 ## construída. Ele deve ser somente ASCII e não deve conter espaços, dois pontos
 ## ou ponto e vírgula.
 
-define build.name = "GameDevWithJulia"
+define build.name = "BreakTimeWithJulia"
 
 
 ## Sons e música ###############################################################

@@ -7,7 +7,7 @@ from effects import EffectType
 from ui_object import UiLabel
 from game_object import GameObject
 from trail_renderer import TrailRenderer
-from sound_manager import SfxType
+from renpy.store import SfxType
 from brick import Brick
 from particle import Particle, ParticleType
 from object_spawner import ObjectSpawner

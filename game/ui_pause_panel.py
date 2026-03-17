@@ -2,17 +2,17 @@ import pygame
 
 from ui_object import UiLabel, UiOverlay, UiOption
 from ui_panel import UiPanel
-from sound_manager import SfxType
+from renpy.store import SfxType
 from game_context import GameState
 
 
 class UiPausePanel(UiPanel):
     def __init__(self, context):
         options_list = [
-            UiOption("Resume", self.continue_game, context),
+            UiOption("Continuar", self.continue_game, context),
             # UiOption("Restart", self.restart_game, context),
-            UiOption("Options", self.show_options, context),
-            UiOption("Quit", self.quit_game, context),
+            UiOption("Opções", self.show_options, context),
+            UiOption("Sair", self.quit_game, context),
         ]
         super().__init__("Paused", options_list, context)
 

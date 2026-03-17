@@ -1,6 +1,7 @@
 define julia = Character(name="Julia", image=None, color="#C161D4")
 define simon = Character(name="Simon", image=None, color="#5995ED")
 
+image bg_julia = "vn_images/ep2 fri_game_home_excuse.webp"
 image julia_normal = "vn_images/ep2 fri_game_julia_likeit2.webp"
 image julia_excited = "vn_images/ep2 fri_game_home_julia_goodluck.webp"
 image julia_stripping = "vn_images/ep2 fri_game_glitch2_service.webp"
@@ -256,7 +257,7 @@ label mini_3:
     "O estômago de Simon ronca, reclamando que ele não come nada há um bom tempo."
     simon "Quero dizer, você sempre pode me pagar um almoço, haha."
     
-    scene julia_stripping
+    # scene julia_stripping
     julia "Hahaha, um almoço é? Quem sabe mais tarde."
     "Julia olha para Simon com um sorriso safado e começa a tirar as roupas lentamente."
     # julia starts stripping

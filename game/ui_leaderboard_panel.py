@@ -3,7 +3,7 @@ import random
 import os
 import json
 from constants import GameConstants
-from sound_manager import SfxType
+from renpy.store import SfxType
 from game_context import LayerName
 from ui_panel import UiPanel
 from ui_object import UiOption, UiLabel, UiOverlay, UiBar
@@ -17,9 +17,9 @@ class LeaderboardEntry:
 class UiLeaderboardPanel(UiPanel):
     def __init__(self, context):
         options = [
-            UiOption("Back", self.close_panel, context),
+            UiOption("Voltar", self.close_panel, context),
         ]
-        super().__init__("Leaderboard", options, context)
+        super().__init__("Placar", options, context)
 
         # position Back button and Title further from the center
         self.options[0].ui_label.body.y = self.context.screen.height - 30

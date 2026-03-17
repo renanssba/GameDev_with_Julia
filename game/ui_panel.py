@@ -2,7 +2,7 @@ import pygame
 
 from constants import GameConstants
 from game_context import LayerName
-from sound_manager import SfxType
+from renpy.store import SfxType
 from ui_object import UiObject, UiLabel, UiOverlay
 from reskinner import Reskinner
 

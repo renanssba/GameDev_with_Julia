@@ -1,6 +1,6 @@
 import pygame
 from constants import GameConstants
-from sound_manager import SfxType
+from renpy.store import SfxType
 from game_context import LayerName
 from ui_panel import UiPanel
 from ui_object import UiOption, UiLabel, UiOverlay, UiBar
@@ -15,13 +15,13 @@ class OptionsContainer:
 class UiOptionsPanel(UiPanel):
     def __init__(self, context):
         options = [
-            UiOption("Master", self.toggle_master, context),
-            UiOption("Sound", self.toggle_sound, context),
-            UiOption("Music", self.toggle_music, context),
-            UiOption("Fullscreen", self.toggle_fullscreen, context),
-            UiOption("Back", self.close_panel, context),
+            UiOption("Geral", self.toggle_master, context),
+            UiOption("Som", self.toggle_sound, context),
+            UiOption("Música", self.toggle_music, context),
+            UiOption("Tela Cheia", self.toggle_fullscreen, context),
+            UiOption("Voltar", self.close_panel, context),
         ]
-        super().__init__("Options", options, context)
+        super().__init__("Opções", options, context)
 
         self.title.body.y -= 10
 

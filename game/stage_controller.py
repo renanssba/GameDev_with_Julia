@@ -6,7 +6,7 @@ from constants import GameConstants
 from paddle import Paddle
 from vector2 import Vector2
 from brick import Brick
-from sound_manager import SfxType
+from renpy.store import SfxType
 from effects import EffectType
 from ui_dialog import UiDialog
 

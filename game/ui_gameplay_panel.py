@@ -3,7 +3,7 @@ from ui_panel import UiPanel
 from game_context import GameState, LayerName
 from ui_object import UiObject, UiLabel, UiOverlay
 from constants import GameConstants
-from sound_manager import SfxType
+from renpy.store import SfxType
 from effects import EffectType
 
 

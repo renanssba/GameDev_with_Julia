@@ -15,7 +15,7 @@ init -1 python:
     from ui_leaderboard_panel import UiLeaderboardPanel
     from ui_end_card_panel import UiEndCardPanel
     from ui_transition_panel import UiTransitionPanel
-    from sound_manager import SoundManager, SfxType
+    from renpy.store import SoundManager, SfxType
     from effects import EffectType
     from effect_controller import EffectController
     from reskinner import Reskinner

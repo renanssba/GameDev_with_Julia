@@ -57,6 +57,14 @@ init -2 python:
             # Hora em que cada canal sfx começou a tocar (para escolher o mais antigo quando todos ocupados)
             self._sfx_channel_start = {}
 
+            master_volume = preferences.volumes["main"]
+            music_volume = preferences.volumes["music"]
+            sfx_volume = preferences.volumes["sfx"]
+            print(f">> SFX volume: {sfx_volume}, Music volume: {music_volume}, Master volume: {master_volume}")
+        
+        def get_all_volumes(self):
+            return preferences.volumes
+
         def _first_free_sfx_channel(self):
             """Retorna o nome do primeiro canal sfx livre, ou None se todos ocupados."""
             for ch in self.SFX_CHANNELS:

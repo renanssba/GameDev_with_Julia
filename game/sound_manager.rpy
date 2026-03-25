@@ -1,7 +1,3 @@
-# SoundManager e SfxType - áudio via Ren'Py (music/sound)
-# 12 canais SFX (sfx0–sfx11); play_sfx usa o primeiro canal livre.
-# Uso: context.sound_manager.play_music(SfxType.GAMEPLAY_MUSIC), play_sfx(SfxType.COIN), etc.
-
 init -2 python:
     import time
     from enum import Enum
@@ -55,7 +51,7 @@ init -2 python:
             self.sfx_volume = 0.7
             self.music_volume = 0.7
             # Hora em que cada canal sfx começou a tocar (para escolher o mais antigo quando todos ocupados)
-            self._sfx_channel_start = {}
+            self.sfx_channel_start = {}
 
             master_volume = preferences.volumes["main"]
             music_volume = preferences.volumes["music"]
@@ -65,20 +61,20 @@ init -2 python:
         def get_all_volumes(self):
             return preferences.volumes
 
-        def _first_free_sfx_channel(self):
+        def first_free_sfx_channel(self):
             """Retorna o nome do primeiro canal sfx livre, ou None se todos ocupados."""
             for ch in self.SFX_CHANNELS:
                 if renpy.sound.get_playing(channel=ch) is None:
                     return ch
             return None
 
-        def _oldest_busy_sfx_channel(self):
+        def oldest_busy_sfx_channel(self):
             """Retorna o canal sfx que começou a tocar mais cedo (entre os ocupados)."""
             oldest_ch = None
             oldest_t = None
             for ch in self.SFX_CHANNELS:
                 if renpy.sound.get_playing(channel=ch) is not None:
-                    t = self._sfx_channel_start.get(ch, 0)
+                    t = self.sfx_channel_start.get(ch, 0)
                     if oldest_t is None or t < oldest_t:
                         oldest_t = t
                         oldest_ch = ch
@@ -86,9 +82,9 @@ init -2 python:
 
         def play_sfx(self, sfx_type):
             """Toca um SFX no primeiro canal livre. Se todos ocupados, para o que começou mais cedo e usa o canal."""
-            ch = self._first_free_sfx_channel()
+            ch = self.first_free_sfx_channel()
             if ch is None:
-                ch = self._oldest_busy_sfx_channel()
+                ch = self.oldest_busy_sfx_channel()
                 if ch is not None:
                     renpy.sound.stop(channel=ch)
             if ch is None:
@@ -97,7 +93,7 @@ init -2 python:
             path = "sfx/" + name + ".ogg"
             if renpy.loader.loadable(path):
                 renpy.sound.play(path, channel=ch)
-                self._sfx_channel_start[ch] = time.time()
+                self.sfx_channel_start[ch] = time.time()
 
         def _get_music_base(self, sfx_type):
             base = sfx_type.value

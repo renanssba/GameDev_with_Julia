@@ -43,7 +43,7 @@ class Powerup(GameObject):
         # Keep selecting until it's a valid powerup type
         while True:
             powerup_type = random.choice(list(PowerupType))
-            if powerup_type != PowerupType.COIN and powerup_type != PowerupType.RANDOM:
+            if powerup_type != PowerupType.COIN and powerup_type != PowerupType.STUN and powerup_type != PowerupType.RANDOM:
                 return powerup_type
 
     def debug_specific_powerup(self):

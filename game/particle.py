@@ -8,7 +8,6 @@ from ui_object import UiLabel
 
 class ParticleType(Enum):
     FIRE = "part_fire_"
-    LOVE = "part_love_"
     PETAL = "part_petal_"
     HIT = "part_hit_"
     TEXT = "none"
@@ -30,6 +29,9 @@ class Particle(GameObject):
     def update_skin(self):
         super().update_skin()
         self.update_body_from_image(self.body.x, self.body.y)
+
+    def current_frame_number(self):
+        return int((self.lifetime_current / self.framerate) % self.num_frames)
     
     def die(self):
         self.context.game_objects.remove(self)

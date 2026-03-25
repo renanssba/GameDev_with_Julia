@@ -9,6 +9,8 @@ from brick import Brick
 from renpy.store import SfxType
 from effects import EffectType
 from ui_dialog import UiDialog
+from particle import Particle, ParticleType
+from object_spawner import ObjectSpawner
 
 
 class StageController():
@@ -29,6 +31,16 @@ class StageController():
         # play gameplay music
         if self.context.reskin == 0:
             self.context.sound_manager.play_music(SfxType.GAMEPLAY_MUSIC)
+
+
+
+        # petals spawner
+        self.particle_spawner = ObjectSpawner(self.context, Particle, 20, pygame.Rect(0, 0, self.context.screen.width*2, 0))
+        self.particle_spawner.objs_per_burst = 3
+        self.particle_spawner.objs_speed = Vector2(-0.3, 1.0)
+        self.particle_spawner.objs_lifetime = 1200
+        self.particle_spawner.particle_type = ParticleType.PETAL
+        self.context.game_controller.spawner = self.particle_spawner
 
 
         # story part 2 "cutscene"

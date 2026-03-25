@@ -43,12 +43,6 @@ class UiGameplayPanel(UiPanel):
         self.debug_fps_label.align_body_top()
         self.debug_fps_label.align_body_top()
 
-        # other objects
-        self.powerup_spawner = None
-        # self.powerup_spawner = ObjectSpawner(game, Powerup, 40, pygame.Rect(0, 0, game.screen.width, 0))
-        # self.powerup_spawner.powerup_type = PowerupType.RANDOM
-        # self.context.game_objects.append(self.powerup_spawner)
-
 
     def show_panel(self):
         super().show_panel()

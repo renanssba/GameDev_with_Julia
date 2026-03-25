@@ -12,7 +12,8 @@ class UiTransitionPanel(UiPanel):
         super().__init__(transition_data.name, options, context)
 
     def show_panel(self):
-        self.context.sound_manager.play_music(SfxType.VICTORY_MUSIC)
+        if self.context.story_part != 3:
+            self.context.sound_manager.play_music(SfxType.VICTORY_MUSIC)
 
     def transition(self):
         self.context.game_controller.set_game_state(GameState.RUNNING)

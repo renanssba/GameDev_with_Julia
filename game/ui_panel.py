@@ -97,7 +97,7 @@ class UiPanel(UiObject):
             if event.key == pygame.K_F12:
                 self.toggle_debug() # toggle debug mode
             if event.key == pygame.K_j and self.context.arcade_mode:
-                self.context.game_controller.toggle_reskin(2) # toggle reskin
+                self.context.game_controller.toggle_reskin(1) # toggle reskin
 
         # DEFINE CURRENT PLAYER INPUT TYPE
         if event.type == pygame.KEYDOWN:

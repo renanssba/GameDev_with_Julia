@@ -1,5 +1,6 @@
 init -2 python:
     import time
+    import math
     from enum import Enum
 
     # Registra 12 canais de SFX (mixer "sfx", sem loop) para tocar vários efeitos ao mesmo tempo
@@ -47,19 +48,66 @@ init -2 python:
             self.current_music = None
             self._music_state = None  # None, "intro" or "loop"
 
-            self.master_volume = 0.7
-            self.sfx_volume = 0.7
-            self.music_volume = 0.7
             # Hora em que cada canal sfx começou a tocar (para escolher o mais antigo quando todos ocupados)
             self.sfx_channel_start = {}
 
             master_volume = preferences.volumes["main"]
             music_volume = preferences.volumes["music"]
             sfx_volume = preferences.volumes["sfx"]
-            print(f">> SFX volume: {sfx_volume}, Music volume: {music_volume}, Master volume: {master_volume}")
-        
+
+
         def get_all_volumes(self):
-            return preferences.volumes
+            return {
+                "main": self.mixer_to_bar_fraction(preferences.volumes["main"]),
+                "music": self.mixer_to_bar_fraction(preferences.volumes["music"]),
+                "sfx": self.mixer_to_bar_fraction(preferences.volumes["sfx"]),
+            }
+
+        
+        def mixer_to_bar_fraction(self, mixer_value):
+            """
+            Recebe volume do mixer (0..1) e retorna a fração da barra (0..1),
+            no sistema de sliders de volume do Ren'Py.
+            """
+            if mixer_value <= 0:
+                return 0.0
+
+            if renpy.config.quadratic_volumes:
+                # MixerValue: mixer = t^2 -> t = sqrt(mixer)
+                return max(0.0, min(1.0, math.sqrt(mixer_value)))
+
+            # MixerValue (quadratic_volumes=False):
+            # get_mixer() faz: bar_value_db = 20*log10(mixer) + R, onde R=volume_db_range
+            # A barra vai de 0..R, então a fração é bar_value_db / R.
+            R = renpy.config.volume_db_range
+            bar_value_db = 20 * math.log10(mixer_value) + R
+            return max(0.0, min(1.0, bar_value_db / R))
+
+        def bar_fraction_to_mixer(self, bar_fraction):
+            """
+            Recebe a porcentagem/fração da barra (0..1 ou 0..100) e retorna o valor do mixer (0..1).
+            """
+            # Aceita tanto 0..1 quanto 0..100
+            t = float(bar_fraction)
+            if t > 1.0:
+                t = t / 100.0
+
+            t = max(0.0, min(1.0, t))
+            if t <= 0.0:
+                return 0.0
+
+            if renpy.config.quadratic_volumes:
+                # MixerValue: set_mixer() faz mixer = t^2
+                return t * t
+
+            # MixerValue (quadratic_volumes=False):
+            # set_mixer() faz:
+            #   value = bar_value_db - R
+            #   mixer = 10 ** (value / 20)
+            # onde bar_value_db = t * R.
+            R = renpy.config.volume_db_range
+            bar_value_db = t * R
+            return pow(10, (bar_value_db - R) / 20)
 
         def first_free_sfx_channel(self):
             """Retorna o nome do primeiro canal sfx livre, ou None se todos ocupados."""
@@ -95,7 +143,7 @@ init -2 python:
                 renpy.sound.play(path, channel=ch)
                 self.sfx_channel_start[ch] = time.time()
 
-        def _get_music_base(self, sfx_type):
+        def get_music_base(self, sfx_type):
             base = sfx_type.value
             if base.endswith("_intro"):
                 return base[:-6]
@@ -105,7 +153,7 @@ init -2 python:
 
         def play_music(self, sfx_type):
             """Toca música: intro (1x) + loop (∞). Se não houver intro, só loop."""
-            base = self._get_music_base(sfx_type)
+            base = self.get_music_base(sfx_type)
 
             if self.current_music == base and self._music_state in ("intro", "loop"):
                 return
@@ -146,21 +194,12 @@ init -2 python:
             self.current_music = None
             self._music_state = None
 
-        def set_volumes(self, master_steps, sfx_steps, music_steps):
+        def set_volumes(self, master_slider_volume, sfx_slider_volume, music_slider_volume):
             """Volumes 0–10. Aplica ao Ren'Py (preferences) e aos canais."""
-            self.master_volume = master_steps / 10.0
-            self.sfx_volume = sfx_steps / 10.0
-            self.music_volume = music_steps / 10.0
+            preferences.volumes["main"] = self.bar_fraction_to_mixer(master_slider_volume)
+            preferences.volumes["music"] = self.bar_fraction_to_mixer(music_slider_volume)
+            preferences.volumes["sfx"] = self.bar_fraction_to_mixer(sfx_slider_volume)
 
-            vol_music = self.master_volume * self.music_volume
-            vol_sfx = self.master_volume * self.sfx_volume
-
-            renpy.music.set_volume(vol_music, channel="music")
+            renpy.music.set_volume(preferences.volumes["music"], channel="music")
             for ch in self.SFX_CHANNELS:
-                renpy.music.set_volume(vol_sfx, channel=ch)
-
-        def effective_sfx_volume(self):
-            return self.master_volume * self.sfx_volume
-
-        def effective_music_volume(self):
-            return self.master_volume * self.music_volume
+                renpy.music.set_volume(preferences.volumes["sfx"], channel=ch)

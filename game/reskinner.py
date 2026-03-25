@@ -2,7 +2,6 @@ import random
 
 class Reskinner():
     def __init__(self, context, list_objects, time_to_wait):
-        print("Reskinner initialized with time to wait: ", time_to_wait)
         self.context = context
 
         # randomize the list of objects

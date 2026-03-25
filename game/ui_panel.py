@@ -67,10 +67,16 @@ class UiPanel(UiObject):
         # Alternates between two colors every X unscaled frames
         frame_period = 16
         color_index = (self.context.unscaled_frame // frame_period) % 2
-        if color_index == 0:
-            return GameConstants.COLOR_UI_SELECTED.value
+        if self.context.reskin == 1:
+            if color_index == 0:
+                return GameConstants.COLOR_UI_SELECTED_RESKIN.value
+            else:
+                return GameConstants.COLOR_UI_SELECTED_RESKIN_2.value
         else:
-            return GameConstants.COLOR_UI_SELECTED_2.value
+            if color_index == 0:
+                return GameConstants.COLOR_UI_SELECTED.value
+            else:
+                return GameConstants.COLOR_UI_SELECTED_2.value
 
     
     def offset_options_labels(self, offset_x, offset_y):

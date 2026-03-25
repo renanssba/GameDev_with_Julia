@@ -744,6 +744,12 @@ screen preferences():
                 vbox:
 
                     if config.has_music:
+                        label _("Volume geral")
+
+                        hbox:
+                            bar value Preference("main volume")
+
+                    if config.has_music:
                         label _("Volume da música")
 
                         hbox:
@@ -769,12 +775,12 @@ screen preferences():
                     #         if config.sample_voice:
                     #             textbutton _("Teste") action Play("voice", config.sample_voice)
 
-                    if config.has_music or config.has_sound or config.has_voice:
-                        null height gui.pref_spacing
+                    # if config.has_music or config.has_sound or config.has_voice:
+                    #     null height gui.pref_spacing
 
-                        textbutton _("Silenciar tudo"):
-                            action Preference("all mute", "toggle")
-                            style "mute_all_button"
+                    #     textbutton _("Silenciar tudo"):
+                    #         action Preference("all mute", "toggle")
+                    #         style "mute_all_button"
 
 
 style pref_label is gui_label

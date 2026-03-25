@@ -11,6 +11,7 @@ from effects import EffectType
 from ui_dialog import UiDialog
 from particle import Particle, ParticleType
 from object_spawner import ObjectSpawner
+from boss import Boss
 
 
 class StageController():
@@ -35,12 +36,12 @@ class StageController():
 
 
         # petals spawner
-        self.particle_spawner = ObjectSpawner(self.context, Particle, 20, pygame.Rect(0, 0, self.context.screen.width*2, 0))
-        self.particle_spawner.objs_per_burst = 3
-        self.particle_spawner.objs_speed = Vector2(-0.3, 1.0)
-        self.particle_spawner.objs_lifetime = 1200
-        self.particle_spawner.particle_type = ParticleType.PETAL
-        self.context.game_controller.spawner = self.particle_spawner
+        particle_spawner = ObjectSpawner(self.context, Particle, 20, pygame.Rect(-self.context.screen.x, self.context.screen.y, self.context._base_width, 0))
+        particle_spawner.objs_per_burst = 3
+        particle_spawner.objs_speed = Vector2(-0.3, 1.0)
+        particle_spawner.objs_lifetime = 1200
+        particle_spawner.particle_type = ParticleType.PETAL
+        self.context.game_controller.spawner = particle_spawner
 
 
         # story part 2 "cutscene"
@@ -125,8 +126,8 @@ class StageController():
                         newBrick = Brick(i * GameConstants.BRICK_WIDTH.value + dx.x, j * GameConstants.BRICK_HEIGHT.value + dx.y, 12, self.context)
                         self.context.game_objects.append(newBrick)
                     elif char == "b":
-                        newBrick = Brick(i * GameConstants.BRICK_WIDTH.value + dx.x, j * GameConstants.BRICK_HEIGHT.value + dx.y, 20, self.context)
-                        self.context.game_objects.append(newBrick)
+                        boss = Boss(i * GameConstants.BRICK_WIDTH.value + dx.x, j * GameConstants.BRICK_HEIGHT.value + dx.y + 2, self.context)
+                        self.context.game_objects.append(boss)
 
                     if newBrick is not None:
                         newBrick.body.width = GameConstants.BRICK_WIDTH.value

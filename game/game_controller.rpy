@@ -47,6 +47,9 @@ init -1 python:
 
             # Initialize game-wide effects
             self.effect_controller = EffectController(self)
+
+            # Spawner for special objects like particles
+            self.spawner = None
             
             # Setup stage (player, sound, level)
             self.stage_controller = StageController(self.game)
@@ -134,6 +137,8 @@ init -1 python:
                 self.apply_physics_to_all()
                 self.check_victory()
                 self.check_defeat_or_revive()
+                if(self.spawner is not None):
+                    self.spawner.update()
 
             # cada GameObject faz blit de si no main_render.
             self.render_everything()
@@ -238,6 +243,7 @@ init -1 python:
             else:
                 self.game.reskin = 0
 
+            # todos os objetos que precisam ser reskinned
             list_objects = []
             list_objects.extend(self.game.game_objects)
             list_objects.extend(self.gameplay_panel.objects_to_reskin)
@@ -245,6 +251,7 @@ init -1 python:
             list_objects.extend(self.pause_ui.objects_to_reskin)
             list_objects.extend(self.options_panel.objects_to_reskin)
             list_objects.extend(self.leaderboard_panel.objects_to_reskin)
+            # cria o reskinner, a classe que faz o reskin de todos os objetos
             self.reskinner = Reskinner(self.game, list_objects, time_to_wait)
 
         @property
@@ -334,7 +341,7 @@ init -1 python:
                 case EffectType.HASTE_BALL:
                     self.game.time_scale /= GameConstants.HASTE_FACTOR.value
                 case EffectType.ACTIVATE_RESKIN_ON_END:
-                    self.toggle_reskin(3)
+                    self.toggle_reskin(1)
                 case EffectType.PLAY_JULIA_MUSIC_ON_END:
                     self.game.sound_manager.play_music(SfxType.JULIA_MODE_MUSIC)
 

@@ -35,7 +35,7 @@ class UiOptionsPanel(UiPanel):
 
             if i < 3:
                 new_bar = UiBar(self.context, "bar_", pygame.Rect(option.ui_label.body.x, option.ui_label.body.y, 100, 16))
-                new_bar.max_value = 10
+                new_bar.max_value = 1.0
                 new_bar.set_value(self.option_values[i])
                 new_bar.set_body_center(self.context.screen.width/2, option.ui_label.body_center().y)
                 new_bar.align_body_right()
@@ -71,7 +71,7 @@ class UiOptionsPanel(UiPanel):
             elif event.key == pygame.K_LEFT:
                 self.context.sound_manager.play_sfx(SfxType.UI_CONFIRM)
                 if self.cursor < 3:
-                    self.option_values[self.cursor] -= 1
+                    self.option_values[self.cursor] -= 0.05
                     self.update_volume_values()
                     self.update_labels()
                 # elif self.cursor == 3:
@@ -81,24 +81,24 @@ class UiOptionsPanel(UiPanel):
         pass
     
     def toggle_master(self):
-        self.option_values[0] += 1
+        self.option_values[0] += 0.05
         self.update_volume_values()
         self.update_labels()
     
     def toggle_sound(self):
-        self.option_values[1] += 1
+        self.option_values[1] += 0.05
         self.update_volume_values()
         self.update_labels()
     
     def toggle_music(self):
-        self.option_values[2] += 1
+        self.option_values[2] += 0.05
         self.update_volume_values()
         self.update_labels()
 
     def update_volume_values(self):
-        self.option_values[0] = max(0, min(self.option_values[0], 10))
-        self.option_values[1] = max(0, min(self.option_values[1], 10))
-        self.option_values[2] = max(0, min(self.option_values[2], 10))
+        self.option_values[0] = max(0, min(self.option_values[0], 1.0))
+        self.option_values[1] = max(0, min(self.option_values[1], 1.0))
+        self.option_values[2] = max(0, min(self.option_values[2], 1.0))
         self.context.sound_manager.set_volumes(self.option_values[0], self.option_values[1], self.option_values[2])
 
     def toggle_resolution_right(self):
@@ -136,23 +136,16 @@ class UiOptionsPanel(UiPanel):
 
 
     def save_options(self):
-        data = {
-            "master_volume": self.option_values[0],
-            "sfx_volume": self.option_values[1],
-            "music_volume": self.option_values[2],
-            "fullscreen": self.option_values[3],
-        }
-        renpy.game.persistent.options = data
-        renpy.exports.save_persistent()
+        pass
 
     def load_options(self):
         if not hasattr(renpy.game.persistent, "options") or renpy.game.persistent.options is None or len(renpy.game.persistent.options) == 0:
             return
         data = renpy.game.persistent.options
 
-        self.option_values[0] = data["master_volume"]
-        self.option_values[1] = data["sfx_volume"]
-        self.option_values[2] = data["music_volume"]
+        self.option_values[0] = self.context.sound_manager.get_all_volumes()["main"]
+        self.option_values[1] = self.context.sound_manager.get_all_volumes()["sfx"]
+        self.option_values[2] = self.context.sound_manager.get_all_volumes()["music"]
         self.option_values[3] = self.is_fullscreen()
 
         # apply loaded values to the context

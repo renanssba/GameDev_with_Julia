@@ -112,8 +112,6 @@ class GameContext:
             self.start_stage = 2
             self.last_stage = 2
         elif story_part == 3:
-            # apply reskin in julia's scene
-            # self.reskin = 1
             self.start_stage = 3
             self.last_stage = 4
 

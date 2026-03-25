@@ -51,6 +51,30 @@ define config.has_music = True
 define config.has_voice = True
 
 
+## Desativar Features de RenPy #####
+
+
+# desativa a tradução automática (força inglês)
+define config.language = "english"
+# desativa o modo de desenvolvedor
+define config.developer = False
+
+## Desativar atalhos do Ren'Py (S screenshot, V self-voicing, F fullscreen, H hide)
+## Em 00keymap.rpy: S->screenshot, V->self_voicing, F->toggle_fullscreen, H->hide_windows.
+init -900 python:
+    config.keymap["screenshot"] = [ ]
+    config.keymap["self_voicing"] = [ ]
+    config.keymap["toggle_fullscreen"] = [ ]
+    config.keymap["hide_windows"] = [ ]
+
+    # Alguns fluxos consultam também o default_keymap; manter consistente evita regressões.
+    if hasattr(config, "default_keymap"):
+        config.default_keymap["screenshot"] = [ ]
+        config.default_keymap["self_voicing"] = [ ]
+        config.default_keymap["toggle_fullscreen"] = [ ]
+        config.default_keymap["hide_windows"] = [ ]
+
+
 ## Para permitir que o usuário reproduza um som de teste no canal de som ou
 ## voz, descomente a linha abaixo e use-a para definir um som de amostra a ser
 ## reproduzido.

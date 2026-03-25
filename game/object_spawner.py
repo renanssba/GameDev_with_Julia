@@ -32,7 +32,6 @@ class ObjectSpawner():
         if self.count >= self.spawn_interval:
             self.count = 0
             for i in range(self.objs_per_burst):
-                print("spawning object")
                 self.spawn_object()
 
     def spawn_object(self):

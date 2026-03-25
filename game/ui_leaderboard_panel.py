@@ -31,6 +31,12 @@ class UiLeaderboardPanel(UiPanel):
         # DEBUG: generate random entries
         # self.generate_random_entries(2) # used for Debug
         # self.save_entries()
+        self.new_record_tag = UiLabel(self.context.screen.width / 2, self.context.screen.height - 40, "Novo Recorde! Digite seu nome.", self.context.ui_font, self.context)
+        if self.context.reskin == 1:
+            self.new_record_tag.update_text_color(GameConstants.COLOR_UI_SELECTED_RESKIN.value)
+        else:
+            self.new_record_tag.update_text_color(GameConstants.COLOR_UI_SELECTED.value)
+        self.new_record_tag.align_body_left()
 
         self.player_input = ""
         self.inputing_name = False
@@ -71,6 +77,7 @@ class UiLeaderboardPanel(UiPanel):
             self.options = []
             super().execute_render()
             self.options = hidden_options
+            self.new_record_tag.execute_render()
         else:
             super().execute_render()
 
